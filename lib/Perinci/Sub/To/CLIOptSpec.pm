@@ -9,6 +9,10 @@ use warnings;
 
 our %SPEC;
 
+require Exporter;
+our @ISA = qw(Exporter);
+our @EXPORT_OK = qw(gen_cli_opt_spec_from_meta);
+
 $SPEC{gen_cli_opt_spec_from_meta} = {
     v => 1.1,
     summary => 'From Rinci function metadata, generate structure convenient '.

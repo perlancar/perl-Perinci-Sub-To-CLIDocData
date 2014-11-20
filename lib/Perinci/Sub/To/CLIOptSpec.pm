@@ -166,7 +166,6 @@ sub gen_cli_opt_spec_from_meta {
     my %opts;
     {
         my $ospecs = $ggls_res->[3]{'func.specmeta'};
-        use DDC; dd $ospecs;
         # separate groupable aliases because they will be merged with the
         # argument options
         my (@k, @k_aliases);

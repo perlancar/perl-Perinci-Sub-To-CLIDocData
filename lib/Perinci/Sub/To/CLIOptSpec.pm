@@ -209,6 +209,7 @@ sub gen_cli_opt_spec_from_meta {
                 my $rimeta = rimeta($alias_spec);
                 $ok = _fmt_opt($arg_spec, $ospec->{parsed});
                 my $opt = {
+                    arg_spec => $arg_spec,
                     is_alias => 1,
                     alias_for => $ospec->{alias_for},
                     category => _get_cat_from_arg_spec($arg_spec),
@@ -225,6 +226,7 @@ sub gen_cli_opt_spec_from_meta {
                 my $arg_spec = $args_prop->{$ospec->{arg}};
                 my $rimeta = rimeta($arg_spec);
                 my $opt = {
+                    arg_spec => $arg_spec,
                     category => _get_cat_from_arg_spec($arg_spec),
                 };
 

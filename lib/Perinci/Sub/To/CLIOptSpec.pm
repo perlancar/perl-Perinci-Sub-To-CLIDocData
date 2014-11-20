@@ -107,6 +107,14 @@ extra result in result metadata (`func.*` keys in `$res->[3]` hash).
 
 _
         },
+        per_arg_json => {
+            schema => 'bool',
+            summary => 'Pass per_arg_json=1 to Perinci::Sub::GetArgs::Argv',
+        },
+        per_arg_yaml => {
+            schema => 'bool',
+            summary => 'Pass per_arg_json=1 to Perinci::Sub::GetArgs::Argv',
+        },
         lang => {
             schema => 'str*',
         },
@@ -129,6 +137,8 @@ sub gen_cli_opt_spec_from_meta {
         require Perinci::Sub::GetArgs::Argv;
         Perinci::Sub::GetArgs::Argv::gen_getopt_long_spec_from_meta(
             meta=>$meta, meta_is_normalized=>1, common_opts=>$common_opts,
+            per_arg_json => $args{per_arg_json},
+            per_arg_yaml => $args{per_arg_yaml},
         );
     };
     $ggls_res->[0] == 200 or return $ggls_res;

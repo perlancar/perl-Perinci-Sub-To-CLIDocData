@@ -27,6 +27,15 @@ sub _get_cat_from_arg_spec {
     $cat //= "Options";
 }
 
+sub _add_default_from_arg_spec {
+    my ($opt, $arg_spec) = @_;
+    if (exists $arg_spec->{default}) {
+        $opt->{default} = $arg_spec->{default};
+    } elsif ($arg_spec->{schema} && exists($arg_spec->{schema}[1]{default})) {
+        $opt->{default} = $arg_spec->{schema}[1]{default};
+    }
+}
+
 sub _dash_prefix {
     length($_[0]) > 1 ? "--$_[0]" : "-$_[0]";
 }
@@ -161,8 +170,8 @@ sub gen_cli_opt_spec_from_meta {
             (@args ? " ".join(" ", @args) : "");
     }
 
-    # group options by category, combine options with its alias(es) that can be
-    # combined
+    # generate list of options: group options by category, combine options with
+    # its alias(es) that can be combined
     my %opts;
     {
         my $ospecs = $ggls_res->[3]{'func.specmeta'};
@@ -199,7 +208,7 @@ sub gen_cli_opt_spec_from_meta {
                 my $alias_spec = $arg_spec->{cmdline_aliases}{$ospec->{alias}};
                 my $rimeta = rimeta($alias_spec);
                 $ok = _fmt_opt($arg_spec, $ospec->{parsed});
-                $opts{$ok} = {
+                my $opt = {
                     is_alias => 1,
                     alias_for => $ospec->{alias_for},
                     category => _get_cat_from_arg_spec($arg_spec),
@@ -208,6 +217,8 @@ sub gen_cli_opt_spec_from_meta {
                     description =>
                         $rimeta->langprop({lang=>$lang}, 'description'),
                 };
+                _add_default_from_arg_spec($opt, $arg_spec);
+                $opts{$ok} = $opt;
             } elsif (defined $ospec->{arg}) {
                 # an option for argument
 
@@ -259,6 +270,7 @@ sub gen_cli_opt_spec_from_meta {
                 for (qw/req pos greedy is_password/) {
                     $opt->{$_} = $arg_spec->{$_} if defined $arg_spec->{$_};
                 }
+                _add_default_from_arg_spec($opt, $arg_spec);
                 $opts{$ok} = $opt;
             } else {
                 # option from common_opts

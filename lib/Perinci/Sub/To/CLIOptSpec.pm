@@ -15,6 +15,22 @@ require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(gen_cli_opt_spec_from_meta);
 
+sub _get_cat_from_arg_spec {
+    my $arg_spec = shift;
+    my $cat;
+    for (@{ $arg_spec->{tags} // [] }) {
+        if (!ref($_) && /^category:(.+)/) {
+            $cat = ucfirst($1) . " options";
+            last;
+        }
+    }
+    $cat //= "Options";
+}
+
+sub _dash_prefix {
+    length($_[0]) > 1 ? "--$_[0]" : "-$_[0]";
+}
+
 sub _fmt_opt {
     my $spec = shift;
     my @parsed = @_;
@@ -23,7 +39,7 @@ sub _fmt_opt {
     for my $parsed (@parsed) {
         my $j = 0;
         for (@{ $parsed->{opts} }) {
-            my $opt = length($_)>1 ? "--$_" : "-$_";
+            my $opt = _dash_prefix($_);
             if ($i==0 && $j==0) {
                 if ($parsed->{type}) {
                     if ($spec->{'x.schema.entity'}) {
@@ -32,6 +48,8 @@ sub _fmt_opt {
                         $opt .= "=$parsed->{type}";
                     }
                 }
+                # mark required option with a '*'
+                $opt .= "*" if $spec->{req};
             }
             push @res, $opt;
             $j++;
@@ -148,20 +166,103 @@ sub gen_cli_opt_spec_from_meta {
     my %opts;
     {
         my $ospecs = $ggls_res->[3]{'func.specmeta'};
-        for my $k (keys %$ospecs) {
+        use DDC; dd $ospecs;
+        # separate groupable aliases because they will be merged with the
+        # argument options
+        my (@k, @k_aliases);
+      OSPEC1:
+        for (sort keys %$ospecs) {
+            my $ospec = $ospecs->{$_};
+            {
+                last unless $ospec->{is_alias};
+                next if $ospec->{is_code};
+                my $arg_spec = $args_prop->{$ospec->{arg}};
+                my $alias_spec = $arg_spec->{cmdline_aliases}{$ospec->{alias}};
+                next if $alias_spec->{summary};
+                push @k_aliases, $_;
+                next OSPEC1;
+            }
+            push @k, $_;
+        }
+
+        my %negs; # key=arg, only show one negation form for each arg option
+
+      OSPEC2:
+        while (@k) {
+            my $k = shift @k;
             my $ospec = $ospecs->{$k};
             my $ok;
-            if (defined $ospec->{arg}) {
-                my $arg_spec = $args_prop->{$ospec->{arg}};
+
+            if ($ospec->{is_alias}) {
+                # non-groupable alias
+
+                my $arg_spec = $args_prop->{ $ospec->{arg} };
+                my $alias_spec = $arg_spec->{cmdline_aliases}{$ospec->{alias}};
+                my $rimeta = rimeta($alias_spec);
                 $ok = _fmt_opt($arg_spec, $ospec->{parsed});
-                my $rimeta = rimeta($arg_spec);
                 $opts{$ok} = {
-                    category => "x",
-                    summary => $rimeta->langprop({lang=>$lang}, 'summary'),
+                    is_alias => 1,
+                    alias_for => $ospec->{alias_for},
+                    category => _get_cat_from_arg_spec($arg_spec),
+                    summary => $rimeta->langprop({lang=>$lang}, 'summary') //
+                        "Alias for "._dash_prefix($ospec->{parsed}{opts}[0]),
                     description =>
                         $rimeta->langprop({lang=>$lang}, 'description'),
                 };
+            } elsif (defined $ospec->{arg}) {
+                # an option for argument
+
+                my $arg_spec = $args_prop->{$ospec->{arg}};
+                my $rimeta = rimeta($arg_spec);
+                my $opt = {
+                    category => _get_cat_from_arg_spec($arg_spec),
+                };
+
+                # for bool, only display either the positive (e.g. --bool) or
+                # the negative (e.g. --nobool) depending on the default
+                if (defined($ospec->{is_neg})) {
+                    my $default = $arg_spec->{default} //
+                        $arg_spec->{schema}[1]{default};
+                    next OSPEC2 if  $default && !$ospec->{is_neg};
+                    next OSPEC2 if !$default &&  $ospec->{is_neg};
+                    if ($ospec->{is_neg}) {
+                        next OSPEC2 if $negs{$ospec->{arg}}++;
+                    }
+                }
+
+                if ($ospec->{is_neg}) {
+                    # for negative option, use summary.alt.neg instead of
+                    # summary
+                    $opt->{summary} =
+                        $rimeta->langprop({lang=>$lang}, 'summary.alt.neg');
+                } else {
+                    $opt->{summary} =
+                        $rimeta->langprop({lang=>$lang}, 'summary');
+                }
+                $opt->{description} =
+                    $rimeta->langprop({lang=>$lang}, 'description');
+
+                # find aliases that can be grouped together with this option
+                my @aliases;
+                my $j = $#k_aliases;
+                while ($j >= 0) {
+                    my $aospec = $ospecs->{ $k_aliases[$j] };
+                    {
+                        last unless $aospec->{arg} eq $ospec->{arg};
+                        push @aliases, $aospec->{parsed};
+                        splice @k_aliases, $j, 1;
+                    }
+                    $j--;
+                }
+
+                $ok = _fmt_opt($arg_spec, $ospec->{parsed}, @aliases);
+
+                for (qw/req pos greedy is_password/) {
+                    $opt->{$_} = $arg_spec->{$_} if defined $arg_spec->{$_};
+                }
+                $opts{$ok} = $opt;
             } else {
+                # option from common_opts
                 $ok = _fmt_opt($common_opts, $ospec->{parsed});
                 my $rimeta = rimeta($common_opts->{$ospec->{common_opt}});
                 $opts{$ok} = {
@@ -174,11 +275,6 @@ sub gen_cli_opt_spec_from_meta {
         }
     }
     $cliospec->{opts} = \%opts;
-
-    # XXX: group groupable aliases
-    # XXX: use negative form if default is active (and use alt neg)
-    # XXX: add non-grouped aliases
-    # XXX: proper category
 
     [200, "OK", $cliospec];
 }
@@ -197,4 +293,3 @@ sub gen_cli_opt_spec_from_meta {
 L<Perinci::CmdLine>, L<Perinci::CmdLine::Lite>
 
 L<Pod::Weaver::Plugin::Rinci>
-

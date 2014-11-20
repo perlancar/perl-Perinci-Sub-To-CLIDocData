@@ -42,11 +42,12 @@ sub _dash_prefix {
 
 sub _fmt_opt {
     my $spec = shift;
-    my @parsed = @_;
+    my @ospecs = @_;
     my @res;
     my $i = 0;
-    for my $parsed (@parsed) {
+    for my $ospec (@ospecs) {
         my $j = 0;
+        my $parsed = $ospec->{parsed};
         for (@{ $parsed->{opts} }) {
             my $opt = _dash_prefix($_);
             if ($i==0 && $j==0) {
@@ -58,7 +59,8 @@ sub _fmt_opt {
                     }
                 }
                 # mark required option with a '*'
-                $opt .= "*" if $spec->{req};
+                $opt .= "*" if $spec->{req} && !$ospec->{is_base64} &&
+                    !$ospec->{is_json} && !$ospec->{is_yaml};
             }
             push @res, $opt;
             $j++;
@@ -217,7 +219,7 @@ sub gen_cli_opt_spec_from_meta {
                 my $arg_spec = $args_prop->{ $ospec->{arg} };
                 my $alias_spec = $arg_spec->{cmdline_aliases}{$ospec->{alias}};
                 my $rimeta = rimeta($alias_spec);
-                $ok = _fmt_opt($arg_spec, $ospec->{parsed});
+                $ok = _fmt_opt($arg_spec, $ospec);
                 my $opt = {
                     arg_spec => $arg_spec,
                     is_alias => 1,
@@ -271,14 +273,20 @@ sub gen_cli_opt_spec_from_meta {
                     my $aospec = $ospecs->{ $k_aliases[$j] };
                     {
                         last unless $aospec->{arg} eq $ospec->{arg};
-                        push @aliases, $aospec->{parsed};
+                        push @aliases, $aospec;
                         splice @k_aliases, $j, 1;
                     }
                     $j--;
                 }
 
-                $ok = _fmt_opt($arg_spec, $ospec->{parsed}, @aliases);
+                $ok = _fmt_opt($arg_spec, $ospec, @aliases);
 
+                # include keys from func.specmeta
+                for (qw/arg fqarg is_base64 is_json is_yaml/) {
+                    $opt->{$_} = $ospec->{$_} if defined $ospec->{$_};
+                }
+
+                # include keys from arg_spec
                 for (qw/req pos greedy is_password/) {
                     $opt->{$_} = $arg_spec->{$_} if defined $arg_spec->{$_};
                 }
@@ -286,7 +294,7 @@ sub gen_cli_opt_spec_from_meta {
                 $opts{$ok} = $opt;
             } else {
                 # option from common_opts
-                $ok = _fmt_opt($common_opts, $ospec->{parsed});
+                $ok = _fmt_opt($common_opts, $ospec);
                 my $rimeta = rimeta($common_opts->{$ospec->{common_opt}});
                 $opts{$ok} = {
                     category => "Common options", # XXX translatable?

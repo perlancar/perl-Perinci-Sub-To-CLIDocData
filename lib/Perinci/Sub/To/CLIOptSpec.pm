@@ -15,16 +15,20 @@ require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(gen_cli_opt_spec_from_meta);
 
-sub _get_cat_from_arg_spec {
-    my $arg_spec = shift;
+sub _add_category_from_arg_spec {
+    my ($opt, $arg_spec) = @_;
     my $cat;
+    my $raw_cat = '';
     for (@{ $arg_spec->{tags} // [] }) {
         if (!ref($_) && /^category:(.+)/) {
+            $raw_cat = $1;
             $cat = ucfirst($1) . " options";
             last;
         }
     }
     $cat //= "Options";
+    $opt->{category} = $cat;
+    $opt->{raw_category} = $raw_cat;
 }
 
 sub _add_default_from_arg_spec {
@@ -224,12 +228,12 @@ sub gen_cli_opt_spec_from_meta {
                     arg_spec => $arg_spec,
                     is_alias => 1,
                     alias_for => $ospec->{alias_for},
-                    category => _get_cat_from_arg_spec($arg_spec),
                     summary => $rimeta->langprop({lang=>$lang}, 'summary') //
                         "Alias for "._dash_prefix($ospec->{parsed}{opts}[0]),
                     description =>
                         $rimeta->langprop({lang=>$lang}, 'description'),
                 };
+                _add_category_from_arg_spec($opt, $arg_spec);
                 _add_default_from_arg_spec($opt, $arg_spec);
                 $opts{$ok} = $opt;
             } elsif (defined $ospec->{arg}) {
@@ -239,8 +243,9 @@ sub gen_cli_opt_spec_from_meta {
                 my $rimeta = rimeta($arg_spec);
                 my $opt = {
                     arg_spec => $arg_spec,
-                    category => _get_cat_from_arg_spec($arg_spec),
                 };
+
+                _add_category_from_arg_spec($opt, $arg_spec);
 
                 # for bool, only display either the positive (e.g. --bool) or
                 # the negative (e.g. --nobool) depending on the default

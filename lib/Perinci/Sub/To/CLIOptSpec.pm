@@ -230,7 +230,7 @@ sub gen_cli_opt_spec_from_meta {
                     $ok = _fmt_opt($arg_spec, $ospec);
                     $opt = {
                         is_alias => 1,
-                        alias_for => $ospec->{alias_for},
+                        alias_for_arg => $ospec->{alias_for},
                         summary => $rimeta->langprop({lang=>$lang}, 'summary') //
                             "Alias for "._dash_prefix($ospec->{parsed}{opts}[0]),
                         description =>
@@ -314,6 +314,23 @@ sub gen_cli_opt_spec_from_meta {
 
             }
         }
+
+        # link ungrouped alias to its main opt
+      OPT1:
+        for my $k (keys %opts) {
+            my $opt = $opts{$k};
+            next unless $opt->{is_alias};
+            for my $k2 (keys %opts) {
+                my $arg_opt = $opts{$k2};
+                next if $arg_opt->{is_alias} || $arg_opt->{is_base64} ||
+                    $arg_opt->{is_json} || $arg_opt->{is_yaml};
+                next unless defined($arg_opt->{arg}) &&
+                    $arg_opt->{arg} eq $opt->{alias_for_arg};
+                $opt->{alias_for_opt} = $k2;
+                next OPT1;
+            }
+        }
+
     }
     $cliospec->{opts} = \%opts;
 

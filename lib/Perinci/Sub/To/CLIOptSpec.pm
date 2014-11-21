@@ -319,14 +319,15 @@ sub gen_cli_opt_spec_from_meta {
       OPT1:
         for my $k (keys %opts) {
             my $opt = $opts{$k};
-            next unless $opt->{is_alias};
+            next unless $opt->{is_alias} || $opt->{is_base64} ||
+                $opt->{is_json} || $opt->{is_yaml};
             for my $k2 (keys %opts) {
                 my $arg_opt = $opts{$k2};
                 next if $arg_opt->{is_alias} || $arg_opt->{is_base64} ||
                     $arg_opt->{is_json} || $arg_opt->{is_yaml};
                 next unless defined($arg_opt->{arg}) &&
-                    $arg_opt->{arg} eq $opt->{alias_for_arg};
-                $opt->{alias_for_opt} = $k2;
+                    $arg_opt->{arg} eq $opt->{arg};
+                $opt->{main_opt} = $k2;
                 next OPT1;
             }
         }

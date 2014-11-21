@@ -230,7 +230,7 @@ sub gen_cli_opt_spec_from_meta {
                     $ok = _fmt_opt($arg_spec, $ospec);
                     $opt = {
                         is_alias => 1,
-                        alias_for_arg => $ospec->{alias_for},
+                        alias_for => $ospec->{alias_for},
                         summary => $rimeta->langprop({lang=>$lang}, 'summary') //
                             "Alias for "._dash_prefix($ospec->{parsed}{opts}[0]),
                         description =>

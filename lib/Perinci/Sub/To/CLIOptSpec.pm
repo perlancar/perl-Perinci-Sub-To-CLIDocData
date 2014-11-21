@@ -20,7 +20,8 @@ sub _add_category_from_arg_spec {
     my $cat;
     my $raw_cat = '';
     for (@{ $arg_spec->{tags} // [] }) {
-        if (!ref($_) && /^category:(.+)/) {
+        my $tag_name = ref($_) ? $_->{name} : $_;
+        if ($tag_name =~ /^category:(.+)/) {
             $raw_cat = $1;
             $cat = ucfirst($1) . " options";
             last;

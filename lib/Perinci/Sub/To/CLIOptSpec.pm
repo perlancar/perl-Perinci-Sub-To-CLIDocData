@@ -181,7 +181,7 @@ sub gen_cli_opt_spec_from_meta {
             delete $args_prop{$arg};
             $pos++;
         }
-        unshift @args, "[options]" if keys %args_prop; # XXX translatable?
+        unshift @args, "[options]" if keys(%args_prop) || keys(%$common_opts); # XXX translatable?
         $cliospec->{usage_line} = "[[prog]]".
             (@args ? " ".join(" ", @args) : "");
     }

@@ -292,7 +292,7 @@ sub gen_cli_opt_spec_from_meta {
                 }
 
                 # include keys from arg_spec
-                for (qw/req pos greedy is_password/) {
+                for (qw/req pos greedy is_password links tags/) {
                     $opt->{$_} = $arg_spec->{$_} if defined $arg_spec->{$_};
                 }
                 _add_default_from_arg_spec($opt, $arg_spec);

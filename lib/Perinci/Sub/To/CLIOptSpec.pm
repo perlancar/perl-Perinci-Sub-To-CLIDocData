@@ -217,74 +217,75 @@ sub gen_cli_opt_spec_from_meta {
             my $ospec = $ospecs->{$k};
             my $ok;
 
-            if ($ospec->{is_alias}) {
-                # non-groupable alias
+            if ($ospec->{is_alias} || defined($ospec->{arg})) {
+                my $arg_spec;
+                my $opt;
 
-                my $arg_spec = $args_prop->{ $ospec->{arg} };
-                my $alias_spec = $arg_spec->{cmdline_aliases}{$ospec->{alias}};
-                my $rimeta = rimeta($alias_spec);
-                $ok = _fmt_opt($arg_spec, $ospec);
-                my $opt = {
-                    arg_spec => $arg_spec,
-                    is_alias => 1,
-                    alias_for => $ospec->{alias_for},
-                    summary => $rimeta->langprop({lang=>$lang}, 'summary') //
-                        "Alias for "._dash_prefix($ospec->{parsed}{opts}[0]),
-                    description =>
+                if ($ospec->{is_alias}) {
+                    # non-groupable alias
+
+                    $arg_spec = $args_prop->{ $ospec->{arg} };
+                    my $alias_spec = $arg_spec->{cmdline_aliases}{$ospec->{alias}};
+                    my $rimeta = rimeta($alias_spec);
+                    $ok = _fmt_opt($arg_spec, $ospec);
+                    $opt = {
+                        is_alias => 1,
+                        alias_for => $ospec->{alias_for},
+                        summary => $rimeta->langprop({lang=>$lang}, 'summary') //
+                            "Alias for "._dash_prefix($ospec->{parsed}{opts}[0]),
+                        description =>
                         $rimeta->langprop({lang=>$lang}, 'description'),
-                };
-                _add_category_from_arg_spec($opt, $arg_spec);
-                _add_default_from_arg_spec($opt, $arg_spec);
-                $opts{$ok} = $opt;
-            } elsif (defined $ospec->{arg}) {
-                # an option for argument
-
-                my $arg_spec = $args_prop->{$ospec->{arg}};
-                my $rimeta = rimeta($arg_spec);
-                my $opt = {
-                    arg_spec => $arg_spec,
-                };
-
-                _add_category_from_arg_spec($opt, $arg_spec);
-
-                # for bool, only display either the positive (e.g. --bool) or
-                # the negative (e.g. --nobool) depending on the default
-                if (defined($ospec->{is_neg})) {
-                    my $default = $arg_spec->{default} //
-                        $arg_spec->{schema}[1]{default};
-                    next OSPEC2 if  $default && !$ospec->{is_neg};
-                    next OSPEC2 if !$default &&  $ospec->{is_neg};
-                    if ($ospec->{is_neg}) {
-                        next OSPEC2 if $negs{$ospec->{arg}}++;
-                    }
-                }
-
-                if ($ospec->{is_neg}) {
-                    # for negative option, use summary.alt.neg instead of
-                    # summary
-                    $opt->{summary} =
-                        $rimeta->langprop({lang=>$lang}, 'summary.alt.neg');
+                    };
                 } else {
-                    $opt->{summary} =
-                        $rimeta->langprop({lang=>$lang}, 'summary');
-                }
-                $opt->{description} =
-                    $rimeta->langprop({lang=>$lang}, 'description');
+                    # an option for argument
 
-                # find aliases that can be grouped together with this option
-                my @aliases;
-                my $j = $#k_aliases;
-                while ($j >= 0) {
-                    my $aospec = $ospecs->{ $k_aliases[$j] };
-                    {
-                        last unless $aospec->{arg} eq $ospec->{arg};
-                        push @aliases, $aospec;
-                        splice @k_aliases, $j, 1;
+                    $arg_spec = $args_prop->{$ospec->{arg}};
+                    my $rimeta = rimeta($arg_spec);
+                    my $opt = {};
+
+                    _add_category_from_arg_spec($opt, $arg_spec);
+
+                    # for bool, only display either the positive (e.g. --bool) or
+                    # the negative (e.g. --nobool) depending on the default
+                    if (defined($ospec->{is_neg})) {
+                        my $default = $arg_spec->{default} //
+                            $arg_spec->{schema}[1]{default};
+                        next OSPEC2 if  $default && !$ospec->{is_neg};
+                        next OSPEC2 if !$default &&  $ospec->{is_neg};
+                        if ($ospec->{is_neg}) {
+                            next OSPEC2 if $negs{$ospec->{arg}}++;
+                        }
                     }
-                    $j--;
+
+                    if ($ospec->{is_neg}) {
+                        # for negative option, use summary.alt.neg instead of
+                        # summary
+                        $opt->{summary} =
+                            $rimeta->langprop({lang=>$lang}, 'summary.alt.neg');
+                    } else {
+                        $opt->{summary} =
+                            $rimeta->langprop({lang=>$lang}, 'summary');
+                    }
+                    $opt->{description} =
+                        $rimeta->langprop({lang=>$lang}, 'description');
+
+                    # find aliases that can be grouped together with this option
+                    my @aliases;
+                    my $j = $#k_aliases;
+                    while ($j >= 0) {
+                        my $aospec = $ospecs->{ $k_aliases[$j] };
+                        {
+                            last unless $aospec->{arg} eq $ospec->{arg};
+                            push @aliases, $aospec;
+                            splice @k_aliases, $j, 1;
+                        }
+                        $j--;
+                    }
+
+                    $ok = _fmt_opt($arg_spec, $ospec, @aliases);
                 }
 
-                $ok = _fmt_opt($arg_spec, $ospec, @aliases);
+                $opt->{arg_spec} = $arg_spec;
 
                 # include keys from func.specmeta
                 for (qw/arg fqarg is_base64 is_json is_yaml/) {
@@ -295,10 +296,14 @@ sub gen_cli_opt_spec_from_meta {
                 for (qw/req pos greedy is_password links tags/) {
                     $opt->{$_} = $arg_spec->{$_} if defined $arg_spec->{$_};
                 }
+
+                _add_category_from_arg_spec($opt, $arg_spec);
                 _add_default_from_arg_spec($opt, $arg_spec);
                 $opts{$ok} = $opt;
+
             } else {
                 # option from common_opts
+
                 $ok = _fmt_opt($common_opts, $ospec);
                 my $rimeta = rimeta($common_opts->{$ospec->{common_opt}});
                 $opts{$ok} = {
@@ -307,6 +312,7 @@ sub gen_cli_opt_spec_from_meta {
                     description =>
                         $rimeta->langprop({lang=>$lang}, 'description'),
                 };
+
             }
         }
     }

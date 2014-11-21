@@ -241,9 +241,7 @@ sub gen_cli_opt_spec_from_meta {
 
                     $arg_spec = $args_prop->{$ospec->{arg}};
                     my $rimeta = rimeta($arg_spec);
-                    my $opt = {};
-
-                    _add_category_from_arg_spec($opt, $arg_spec);
+                    $opt = {};
 
                     # for bool, only display either the positive (e.g. --bool) or
                     # the negative (e.g. --nobool) depending on the default
@@ -299,6 +297,7 @@ sub gen_cli_opt_spec_from_meta {
 
                 _add_category_from_arg_spec($opt, $arg_spec);
                 _add_default_from_arg_spec($opt, $arg_spec);
+
                 $opts{$ok} = $opt;
 
             } else {

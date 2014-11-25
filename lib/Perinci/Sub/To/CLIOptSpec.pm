@@ -82,11 +82,11 @@ $SPEC{gen_cli_opt_spec_from_meta} = {
     description => <<'_',
 
 This function calls `Perinci::Sub::GetArgs::Argv`'s
-`gen_getopt_long_spec_from_meta()` (or receive it, if passed, to avoid
-calculating twice) and post-processes it: produce command usage line, format the
-options, include information from metadata, group the options by category. The
-resulting data structure is convenient to use when one produces a help message
-for a command-line program.
+`gen_getopt_long_spec_from_meta()` (or receive its result as an argument, if
+passed, to avoid calling the function twice) and post-processes it: produce
+command usage line, format the options, include information from metadata, group
+the options by category. The resulting data structure is convenient to use when
+one produces a help message for a command-line program.
 
 _
     args => {

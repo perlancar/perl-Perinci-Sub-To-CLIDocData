@@ -230,6 +230,7 @@ sub gen_cli_opt_spec_from_meta {
                     my $rimeta = rimeta($alias_spec);
                     $ok = _fmt_opt($arg_spec, $ospec);
                     $opt = {
+                        orig_opt => $k,
                         is_alias => 1,
                         alias_for => $ospec->{alias_for},
                         summary => $rimeta->langprop({lang=>$lang}, 'summary') //
@@ -242,7 +243,9 @@ sub gen_cli_opt_spec_from_meta {
 
                     $arg_spec = $args_prop->{$ospec->{arg}};
                     my $rimeta = rimeta($arg_spec);
-                    $opt = {};
+                    $opt = {
+                        orig_opt => $k,
+                    };
 
                     # for bool, only display either the positive (e.g. --bool) or
                     # the negative (e.g. --nobool) depending on the default
@@ -307,6 +310,7 @@ sub gen_cli_opt_spec_from_meta {
                 $ok = _fmt_opt($common_opts, $ospec);
                 my $rimeta = rimeta($common_opts->{$ospec->{common_opt}});
                 $opts{$ok} = {
+                    orig_opt => $k,
                     category => "Common options", # XXX translatable?
                     summary => $rimeta->langprop({lang=>$lang}, 'summary'),
                     description =>

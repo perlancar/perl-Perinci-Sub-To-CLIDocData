@@ -16,7 +16,7 @@ our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(gen_cli_opt_spec_from_meta);
 
 sub _add_category_from_arg_spec {
-    my ($opt, $arg_spec) = @_;
+    my ($opt, $arg_spec, $has_cats) = @_;
     my $cat;
     my $raw_cat = '';
     for (@{ $arg_spec->{tags} // [] }) {
@@ -27,7 +27,7 @@ sub _add_category_from_arg_spec {
             last;
         }
     }
-    $cat //= $has_cats ? "General options" : "Options";
+    $cat //= $has_cats ? "General options" : "Options"; # XXX translatable?
     $opt->{category} = $cat;
     $opt->{raw_category} = $raw_cat;
 }
@@ -187,10 +187,22 @@ sub gen_cli_opt_spec_from_meta {
             (@args ? " ".join(" ", @args) : "");
     }
 
-    # generate list of options: group options by category, combine options with
-    # its alias(es) that can be combined
+    # generate list of options
     my %opts;
     {
+        my $has_cats;
+      CHECK_HAS_CATS:
+        for my $arg_name (keys %$args_prop) {
+            my $arg_spec = $args_prop->{$arg_name};
+            for (@{ $arg_spec->{tags} // [] }) {
+                my $tag_name = ref($_) ? $_->{name} : $_;
+                if ($tag_name =~ /^category:/) {
+                    $has_cats = 1;
+                    last CHECK_HAS_CATS;
+                }
+            }
+        }
+
         my $ospecs = $ggls_res->[3]{'func.specmeta'};
         # separate groupable aliases because they will be merged with the
         # argument options
@@ -266,7 +278,7 @@ sub gen_cli_opt_spec_from_meta {
                         # regular (positive sentence) summary
                         $opt->{summary} =
                             $rimeta->langprop({lang=>$lang}, 'summary.alt.bool.not');
-                    } elsif ($ospec->{parsed}{type} eq 's@') {
+                    } elsif (($ospec->{parsed}{type}//'') eq 's@') {
                         # for array of string that can be specified via multiple
                         # --opt, show singular version of summary if available.
                         # otherwise show regular summary.
@@ -308,7 +320,7 @@ sub gen_cli_opt_spec_from_meta {
                     $opt->{$_} = $arg_spec->{$_} if defined $arg_spec->{$_};
                 }
 
-                _add_category_from_arg_spec($opt, $arg_spec);
+                _add_category_from_arg_spec($opt, $arg_spec, $has_cats);
                 _add_default_from_arg_spec($opt, $arg_spec);
 
                 $opts{$ok} = $opt;
@@ -321,7 +333,7 @@ sub gen_cli_opt_spec_from_meta {
                 $opts{$ok} = {
                     opt_parsed => $ospec->{parsed},
                     orig_opt => $k,
-                    category => "Common options", # XXX translatable?
+                    category => $has_cats ? "General options" : "Options", # XXX translatable?
                     summary => $rimeta->langprop({lang=>$lang}, 'summary'),
                     description =>
                         $rimeta->langprop({lang=>$lang}, 'description'),

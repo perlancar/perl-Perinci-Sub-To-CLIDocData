@@ -266,6 +266,13 @@ sub gen_cli_opt_spec_from_meta {
                         # summary
                         $opt->{summary} =
                             $rimeta->langprop({lang=>$lang}, 'summary.alt.neg');
+                    } elsif ($ospec->{parsed}{type} eq 's@') {
+                        # for array of string that can be specified via multiple
+                        # --opt, show singular version of summary if available.
+                        # otherwise show regular summary.
+                        $opt->{summary} =
+                            $rimeta->langprop({lang=>$lang}, 'summary.alt.singular') //
+                                $rimeta->langprop({lang=>$lang}, 'summary');
                     } else {
                         $opt->{summary} =
                             $rimeta->langprop({lang=>$lang}, 'summary');

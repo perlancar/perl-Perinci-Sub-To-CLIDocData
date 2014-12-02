@@ -1,4 +1,4 @@
-package Perinci::Sub::To::CLIOptSpec;
+package Perinci::Sub::To::CLIDocData;
 
 # DATE
 # VERSION
@@ -13,7 +13,7 @@ our %SPEC;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT_OK = qw(gen_cli_opt_spec_from_meta);
+our @EXPORT_OK = qw(gen_cli_doc_data_from_meta);
 
 sub _add_category_from_arg_spec {
     my ($opt, $arg_spec, $has_cats) = @_;
@@ -75,18 +75,21 @@ sub _fmt_opt {
     join ", ", @res;
 }
 
-$SPEC{gen_cli_opt_spec_from_meta} = {
+$SPEC{gen_cli_doc_data_from_meta} = {
     v => 1.1,
     summary => 'From Rinci function metadata, generate structure convenient '.
-        'for producing CLI help/usage',
+        'for producing CLI documentation (help/usage/POD)',
     description => <<'_',
 
 This function calls `Perinci::Sub::GetArgs::Argv`'s
 `gen_getopt_long_spec_from_meta()` (or receive its result as an argument, if
 passed, to avoid calling the function twice) and post-processes it: produce
 command usage line, format the options, include information from metadata, group
-the options by category. The resulting data structure is convenient to use when
-one produces a help message for a command-line program.
+the options by category. It also selects examples in the `examples` property
+which are applicable to CLI environment and format them.
+
+The resulting data structure is convenient to use when one wants to produce a
+documentation for CLI program (including help/usage message and POD).
 
 _
     args => {
@@ -130,7 +133,7 @@ _
         schema => 'hash*',
     },
 };
-sub gen_cli_opt_spec_from_meta {
+sub gen_cli_doc_data_from_meta {
     my %args = @_;
 
     my $lang = $args{lang};
@@ -370,8 +373,8 @@ sub gen_cli_opt_spec_from_meta {
 
 =head1 SYNOPSIS
 
- use Perinci::Sub::To::CLIOptSpec qw(gen_cli_opt_spec_from_meta);
- my $cliospec = gen_cli_opt_spec_from_meta(meta => $meta);
+ use Perinci::Sub::To::CLIDocData qw(gen_cli_doc_data_from_meta);
+ my $clidocdata = gen_cli_doc_data_from_meta(meta => $meta);
 
 
 =head1 SEE ALSO

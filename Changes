@@ -1,4 +1,10 @@
-Revision history for Perinci-Sub-To-CLIOptSpec
+Revision history for Perinci-Sub-To-CLIDocData
+
+0.11    2014-12-02 (PERLANCAR) (unreleased)
+
+        - Rename dist from Perinci-Sub-To-CLIOptSpec to the more descriptive and
+          extensive Perinci-Sub-To-CLIDocData.
+
 
 0.10    2014-12-02 (PERLANCAR)
 

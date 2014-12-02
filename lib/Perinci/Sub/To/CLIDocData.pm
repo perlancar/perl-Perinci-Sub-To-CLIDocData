@@ -8,6 +8,7 @@ use strict;
 use warnings;
 
 use Perinci::Object;
+use Perinci::Sub::Util qw(err);
 
 our %SPEC;
 
@@ -15,21 +16,33 @@ require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(gen_cli_doc_data_from_meta);
 
-sub _add_category_from_arg_spec {
-    my ($opt, $arg_spec, $has_cats) = @_;
+sub _has_cats {
+    for my $spec (@{ $_[0] }) {
+        for (@{ $spec->{tags} // [] }) {
+            my $tag_name = ref($_) ? $_->{name} : $_;
+            if ($tag_name =~ /^category:/) {
+                return 1;
+            }
+        }
+    }
+    0;
+}
+
+sub _add_category_from_spec {
+    my ($thing, $spec, $noun, $has_cats) = @_;
     my $cat;
     my $raw_cat = '';
-    for (@{ $arg_spec->{tags} // [] }) {
+    for (@{ $spec->{tags} // [] }) {
         my $tag_name = ref($_) ? $_->{name} : $_;
         if ($tag_name =~ /^category:(.+)/) {
             $raw_cat = $1;
-            $cat = ucfirst($1) . " options";
+            $cat = ucfirst($1) . " " . $noun;
             last;
         }
     }
-    $cat //= $has_cats ? "General options" : "Options"; # XXX translatable?
-    $opt->{category} = $cat;
-    $opt->{raw_category} = $raw_cat;
+    $cat //= $has_cats ? "General $noun" : ucfirst($noun); # XXX translatable?
+    $thing->{category} = $cat;
+    $thing->{raw_category} = $raw_cat;
 }
 
 sub _add_default_from_arg_spec {
@@ -154,7 +167,7 @@ sub gen_cli_doc_data_from_meta {
     $ggls_res->[0] == 200 or return $ggls_res;
 
     my $args_prop = $meta->{args} // {};
-    my $cliospec = {};
+    my $clidocdata = {};
 
     # generate usage line
     {
@@ -186,25 +199,14 @@ sub gen_cli_doc_data_from_meta {
             $pos++;
         }
         unshift @args, "[options]" if keys(%args_prop) || keys(%$common_opts); # XXX translatable?
-        $cliospec->{usage_line} = "[[prog]]".
+        $clidocdata->{usage_line} = "[[prog]]".
             (@args ? " ".join(" ", @args) : "");
     }
 
     # generate list of options
     my %opts;
     {
-        my $has_cats;
-      CHECK_HAS_CATS:
-        for my $arg_name (keys %$args_prop) {
-            my $arg_spec = $args_prop->{$arg_name};
-            for (@{ $arg_spec->{tags} // [] }) {
-                my $tag_name = ref($_) ? $_->{name} : $_;
-                if ($tag_name =~ /^category:/) {
-                    $has_cats = 1;
-                    last CHECK_HAS_CATS;
-                }
-            }
-        }
+        my $has_cats = _has_cats([values %$args_prop]);
 
         my $ospecs = $ggls_res->[3]{'func.specmeta'};
         # separate groupable aliases because they will be merged with the
@@ -323,7 +325,7 @@ sub gen_cli_doc_data_from_meta {
                     $opt->{$_} = $arg_spec->{$_} if defined $arg_spec->{$_};
                 }
 
-                _add_category_from_arg_spec($opt, $arg_spec, $has_cats);
+                _add_category_from_spec($opt, $arg_spec, "options", $has_cats);
                 _add_default_from_arg_spec($opt, $arg_spec);
 
                 $opts{$ok} = $opt;
@@ -363,9 +365,57 @@ sub gen_cli_doc_data_from_meta {
         }
 
     }
-    $cliospec->{opts} = \%opts;
+    $clidocdata->{opts} = \%opts;
 
-    [200, "OK", $cliospec];
+    # filter and format examples
+    my @examples;
+    {
+        my $examples = $meta->{examples} // [];
+        my $has_cats = _has_cats($examples);
+
+        for my $eg (@$examples) {
+            my $rimeta = rimeta($eg);
+            my $argv;
+            my $cmdline;
+            if (defined($eg->{src})) {
+                # we only show shell command examples
+                if ($eg->{src_plang} =~ /^(sh|bash)$/) {
+                    $cmdline = $eg->{src};
+                } else {
+                    next;
+                }
+            } else {
+                require String::ShellQuote;
+                if ($eg->{argv}) {
+                    $argv = $eg->{argv};
+                } else {
+                    require Perinci::Sub::ConvertArgs::Argv;
+                    my $res = Perinci::Sub::ConvertArgs::Argv::convert_args_to_argv(
+                        args => $eg->{args}, meta => $meta);
+                    return err($res, 500, "Can't convert args to argv")
+                        unless $res->[0] == 200;
+                    $argv = $res->[2];
+                }
+                $cmdline = "[[prog]]";
+                for my $arg (@$argv) {
+                    $arg = String::ShellQuote::shell_quote($arg);
+                    $cmdline .= " $arg"; # XXX markup with color?
+                }
+            }
+            my $egdata = {
+                cmdline      => $cmdline,
+                summary      => $rimeta->langprop({lang=>$lang}, 'summary'),
+                description  => $rimeta->langprop({lang=>$lang}, 'description'),
+                example_spec => $eg,
+            };
+            # XXX show result from $eg
+            _add_category_from_spec($egdata, $eg, "examples", $has_cats);
+            push @examples, $egdata;
+        }
+    }
+    $clidocdata->{examples} = \@examples;
+
+    [200, "OK", $clidocdata];
 }
 
 1;

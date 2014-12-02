@@ -27,7 +27,7 @@ sub _add_category_from_arg_spec {
             last;
         }
     }
-    $cat //= "Options";
+    $cat //= $has_cats ? "General options" : "Options";
     $opt->{category} = $cat;
     $opt->{raw_category} = $raw_cat;
 }

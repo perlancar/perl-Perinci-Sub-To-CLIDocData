@@ -1,5 +1,12 @@
 Revision history for Perinci-Sub-To-CLIDocData
 
+0.12    2014-12-03 (PERLANCAR)
+
+        - No functional changes.
+
+        - [pod] Insert sample metadata and result in Synopsis.
+
+
 0.11    2014-12-02 (PERLANCAR)
 
         - Rename dist from Perinci-Sub-To-CLIOptSpec to the more descriptive and

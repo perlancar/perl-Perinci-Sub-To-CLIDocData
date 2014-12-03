@@ -426,6 +426,17 @@ sub gen_cli_doc_data_from_meta {
  use Perinci::Sub::To::CLIDocData qw(gen_cli_doc_data_from_meta);
  my $clidocdata = gen_cli_doc_data_from_meta(meta => $meta);
 
+Sample function metadata (C<$meta>):
+
+# CODE: require Perinci::Examples::CLI; $Perinci::Examples::CLI::SPEC{demo_cli_opts_shorter};
+
+Sample result:
+
+# CODE: require Perinci::Examples::CLI; require Perinci::Sub::To::CLIDocData; Perinci::Sub::To::CLIDocData::gen_cli_doc_data_from_meta(meta=>$Perinci::Examples::CLI::SPEC{demo_cli_opts_shorter});
+
+For a more complete sample, see function metadata for L<demo_cli_opts> in
+L<Perinci::Examples::CLI>.
+
 
 =head1 SEE ALSO
 

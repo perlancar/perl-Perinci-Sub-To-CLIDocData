@@ -188,6 +188,7 @@ sub gen_cli_doc_data_from_meta {
                     last;
                 }
             }
+            $pos++;
             next unless defined($arg);
             if ($arg_spec->{req}) {
                 push @args, "<$arg>";
@@ -196,7 +197,6 @@ sub gen_cli_doc_data_from_meta {
             }
             push @args, "..." if $arg_spec->{greedy};
             delete $args_prop{$arg};
-            $pos++;
         }
         unshift @args, "[options]" if keys(%args_prop) || keys(%$common_opts); # XXX translatable?
         $clidocdata->{usage_line} = "[[prog]]".

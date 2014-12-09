@@ -237,13 +237,14 @@ sub gen_cli_doc_data_from_meta {
 
             if ($ospec->{is_alias} || defined($ospec->{arg})) {
                 my $arg_spec;
+                my $alias_spec;
                 my $opt;
 
                 if ($ospec->{is_alias}) {
                     # non-groupable alias
 
                     $arg_spec = $args_prop->{ $ospec->{arg} };
-                    my $alias_spec = $arg_spec->{cmdline_aliases}{$ospec->{alias}};
+                    $alias_spec = $arg_spec->{cmdline_aliases}{$ospec->{alias}};
                     my $rimeta = rimeta($alias_spec);
                     $ok = _fmt_opt($arg_spec, $ospec);
                     $opt = {
@@ -314,6 +315,7 @@ sub gen_cli_doc_data_from_meta {
                 }
 
                 $opt->{arg_spec} = $arg_spec;
+                $opt->{alias_spec} = $alias_spec if $alias_spec;
 
                 # include keys from func.specmeta
                 for (qw/arg fqarg is_base64 is_json is_yaml/) {

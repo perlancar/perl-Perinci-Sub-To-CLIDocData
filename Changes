@@ -1,5 +1,12 @@
 Revision history for Perinci-Sub-To-CLIDocData
 
+0.14    2014-12-09 (PERLANCAR)
+
+	- Add key 'schema' (currently only for common opt).
+
+	- Add 'alias_spec' key for aliases.
+
+
 0.13    2014-12-04 (PERLANCAR)
 
         - [Bugfix] Fix endless loop problem when producing usage line.

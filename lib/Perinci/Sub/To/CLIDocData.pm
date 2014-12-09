@@ -336,12 +336,14 @@ sub gen_cli_doc_data_from_meta {
                 # option from common_opts
 
                 $ok = _fmt_opt($common_opts, $ospec);
-                my $rimeta = rimeta($common_opts->{$ospec->{common_opt}});
+                my $co = $common_opts->{$ospec->{common_opt}};
+                my $rimeta = rimeta($co);
                 $opts{$ok} = {
                     opt_parsed => $ospec->{parsed},
                     orig_opt => $k,
                     category => $has_cats ? "General options" : "Options", # XXX translatable?
                     summary => $rimeta->langprop({lang=>$lang}, 'summary'),
+                    (schema => $co->{schema}) x !!$co->{schema},
                     description =>
                         $rimeta->langprop({lang=>$lang}, 'description'),
                 };

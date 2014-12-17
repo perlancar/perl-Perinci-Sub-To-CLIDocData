@@ -423,7 +423,7 @@ sub gen_cli_doc_data_from_meta {
 }
 
 1;
-# ABSTRACT: Generate data structure convenient for producing CLI help/usage
+# ABSTRACT:
 
 =head1 SYNOPSIS
 

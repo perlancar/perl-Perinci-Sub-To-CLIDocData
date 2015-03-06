@@ -195,7 +195,7 @@ sub gen_cli_doc_data_from_meta {
             } else {
                 push @args, "[$arg]";
             }
-            push @args, "..." if $arg_spec->{greedy};
+            $args[-1] .= "..." if $arg_spec->{greedy};
             delete $args_prop{$arg};
         }
         unshift @args, "[options]" if keys(%args_prop) || keys(%$common_opts); # XXX translatable?

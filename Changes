@@ -1,5 +1,12 @@
 Revision history for Perinci-Sub-To-CLIDocData
 
+0.15    2015-03-19 (PERLANCAR)
+
+        - [ux] Make common option nicer: 1) also show --no-OPT instead of --OPT
+          for boolean common option which has a true default; 2) put default
+          value.
+
+
 0.14    2014-12-09 (PERLANCAR)
 
 	- Add key 'schema' (currently only for common opt).

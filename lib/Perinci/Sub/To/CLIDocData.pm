@@ -147,6 +147,8 @@ _
     },
 };
 sub gen_cli_doc_data_from_meta {
+    require Getopt::Long::Negate::EN;
+
     my %args = @_;
 
     my $lang = $args{lang};
@@ -267,8 +269,8 @@ sub gen_cli_doc_data_from_meta {
                         orig_opt => $k,
                     };
 
-                    # for bool, only display either the positive (e.g. --bool) or
-                    # the negative (e.g. --nobool) depending on the default
+                    # for bool, only display either the positive (e.g. --bool)
+                    # or the negative (e.g. --nobool) depending on the default
                     if (defined($ospec->{is_neg})) {
                         my $default = $arg_spec->{default} //
                             $arg_spec->{schema}[1]{default};
@@ -335,15 +337,30 @@ sub gen_cli_doc_data_from_meta {
             } else {
                 # option from common_opts
 
-                $optkey = _fmt_opt($common_opts, $ospec);
-                my $co = $common_opts->{$ospec->{common_opt}};
-                my $rimeta = rimeta($co);
+                my $spec = $common_opts->{$ospec->{common_opt}};
+
+                # for bool, only display either the positive (e.g. --bool)
+                # or the negative (e.g. --nobool) depending on the default
+                my $show_neg = $ospec->{parsed}{is_neg} && $spec->{default};
+
+                local $ospec->{parsed}{opts} = do {
+                    # XXX check if it's single-letter, get first
+                    # non-single-letter
+                    my @opts = Getopt::Long::Negate::EN::negations_for_option(
+                        $ospec->{parsed}{opts}[0]);
+                    [ $opts[0] ];
+                } if $show_neg;
+
+                $optkey = _fmt_opt($spec, $ospec);
+                my $rimeta = rimeta($spec);
                 $opts{$optkey} = {
                     opt_parsed => $ospec->{parsed},
                     orig_opt => $k,
                     category => $has_cats ? "General options" : "Options", # XXX translatable?
-                    summary => $rimeta->langprop({lang=>$lang}, 'summary'),
-                    (schema => $co->{schema}) x !!$co->{schema},
+                    summary => $show_neg ?
+                        $rimeta->langprop({lang=>$lang}, 'summary.alt.bool.not') :
+                            $rimeta->langprop({lang=>$lang}, 'summary'),
+                    (schema => $spec->{schema}) x !!$spec->{schema},
                     description =>
                         $rimeta->langprop({lang=>$lang}, 'description'),
                 };

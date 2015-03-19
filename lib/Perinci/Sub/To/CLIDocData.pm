@@ -233,7 +233,7 @@ sub gen_cli_doc_data_from_meta {
         while (@k) {
             my $k = shift @k;
             my $ospec = $ospecs->{$k};
-            my $ok;
+            my $optkey;
 
             if ($ospec->{is_alias} || defined($ospec->{arg})) {
                 my $arg_spec;
@@ -246,7 +246,7 @@ sub gen_cli_doc_data_from_meta {
                     $arg_spec = $args_prop->{ $ospec->{arg} };
                     $alias_spec = $arg_spec->{cmdline_aliases}{$ospec->{alias}};
                     my $rimeta = rimeta($alias_spec);
-                    $ok = _fmt_opt($arg_spec, $ospec);
+                    $optkey = _fmt_opt($arg_spec, $ospec);
                     $opt = {
                         opt_parsed => $ospec->{parsed},
                         orig_opt => $k,
@@ -311,7 +311,7 @@ sub gen_cli_doc_data_from_meta {
                         $j--;
                     }
 
-                    $ok = _fmt_opt($arg_spec, $ospec, @aliases);
+                    $optkey = _fmt_opt($arg_spec, $ospec, @aliases);
                 }
 
                 $opt->{arg_spec} = $arg_spec;
@@ -330,15 +330,15 @@ sub gen_cli_doc_data_from_meta {
                 _add_category_from_spec($opt, $arg_spec, "options", $has_cats);
                 _add_default_from_arg_spec($opt, $arg_spec);
 
-                $opts{$ok} = $opt;
+                $opts{$optkey} = $opt;
 
             } else {
                 # option from common_opts
 
-                $ok = _fmt_opt($common_opts, $ospec);
+                $optkey = _fmt_opt($common_opts, $ospec);
                 my $co = $common_opts->{$ospec->{common_opt}};
                 my $rimeta = rimeta($co);
-                $opts{$ok} = {
+                $opts{$optkey} = {
                     opt_parsed => $ospec->{parsed},
                     orig_opt => $k,
                     category => $has_cats ? "General options" : "Options", # XXX translatable?

@@ -363,7 +363,7 @@ sub gen_cli_doc_data_from_meta {
                     (schema => $spec->{schema}) x !!$spec->{schema},
                     description =>
                         $rimeta->langprop({lang=>$lang}, 'description'),
-                    (default => $spec->{default}) x !!(exists $spec->{default}),
+                    (default => $spec->{default}) x !!(exists($spec->{default}) && !$show_neg),
                 };
 
             }

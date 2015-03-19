@@ -72,6 +72,8 @@ sub _fmt_opt {
                 if ($parsed->{type}) {
                     if ($spec->{'x.schema.entity'}) {
                         $opt .= "=".$spec->{'x.schema.entity'};
+                    } elsif ($spec->{'x.schema.element_entity'}) {
+                        $opt .= "=".$spec->{'x.schema.element_entity'};
                     } else {
                         $opt .= "=$parsed->{type}";
                     }
@@ -257,7 +259,7 @@ sub gen_cli_doc_data_from_meta {
                         summary => $rimeta->langprop({lang=>$lang}, 'summary') //
                             "Alias for "._dash_prefix($ospec->{parsed}{opts}[0]),
                         description =>
-                        $rimeta->langprop({lang=>$lang}, 'description'),
+                            $rimeta->langprop({lang=>$lang}, 'description'),
                     };
                 } else {
                     # an option for argument
@@ -361,6 +363,8 @@ sub gen_cli_doc_data_from_meta {
                         $rimeta->langprop({lang=>$lang}, 'summary.alt.bool.not') :
                             $rimeta->langprop({lang=>$lang}, 'summary'),
                     (schema => $spec->{schema}) x !!$spec->{schema},
+                    ('x.schema.entity' => $spec->{'x.schema.entity'}) x !!$spec->{'x.schema.entity'},
+                    ('x.schema.element_entity' => $spec->{'x.schema.element_entity'}) x !!$spec->{'x.schema.element_entity'},
                     description =>
                         $rimeta->langprop({lang=>$lang}, 'description'),
                     (default => $spec->{default}) x !!(exists($spec->{default}) && !$show_neg),

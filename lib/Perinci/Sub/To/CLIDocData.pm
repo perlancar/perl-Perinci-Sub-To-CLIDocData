@@ -293,7 +293,7 @@ sub gen_cli_doc_data_from_meta {
                         # --opt, show singular version of summary if available.
                         # otherwise show regular summary.
                         $opt->{summary} =
-                            $rimeta->langprop({lang=>$lang}, 'summary.alt.numnoun.singular') //
+                            $rimeta->langprop({lang=>$lang}, 'summary.alt.plurality.singular') //
                                 $rimeta->langprop({lang=>$lang}, 'summary');
                     } else {
                         $opt->{summary} =

@@ -288,6 +288,12 @@ sub gen_cli_doc_data_from_meta {
                         # regular (positive sentence) summary
                         $opt->{summary} =
                             $rimeta->langprop({lang=>$lang}, 'summary.alt.bool.not');
+                    } elsif (defined $ospec->{is_neg}) {
+                        # for boolean option which we show the positive, show
+                        # the positive summary if available
+                        $opt->{summary} =
+                            $rimeta->langprop({lang=>$lang}, 'summary.alt.bool.yes') //
+                                $rimeta->langprop({lang=>$lang}, 'summary');
                     } elsif (($ospec->{parsed}{type}//'') eq 's@') {
                         # for array of string that can be specified via multiple
                         # --opt, show singular version of summary if available.

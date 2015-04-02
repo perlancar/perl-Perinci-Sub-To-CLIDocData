@@ -1,5 +1,14 @@
 Revision history for Perinci-Sub-To-CLIDocData
 
+0.16    2015-04-02 (PERLANCAR)
+
+	- Adjust to DefHash 1.0.9 (rename alt.numnoun.* ->
+	  alt.plurality.*).
+
+	- Tweak: include x.schema.{entity,element_entity} from common
+	  option's spec.
+
+
 0.15    2015-03-19 (PERLANCAR)
 
         - [ux] Make common option nicer: 1) also show --no-OPT instead of --OPT

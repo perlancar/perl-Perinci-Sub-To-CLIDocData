@@ -36,7 +36,10 @@ sub _add_category_from_spec {
         my $tag_name = ref($_) ? $_->{name} : $_;
         if ($tag_name =~ /^category:(.+)/) {
             $raw_cat = $1;
-            $cat = ucfirst($1) . " " . $noun;
+
+            $cat = ucfirst($1);
+            $cat =~ s/-/ /g;
+            $cat .= " " . $noun;
             last;
         }
     }

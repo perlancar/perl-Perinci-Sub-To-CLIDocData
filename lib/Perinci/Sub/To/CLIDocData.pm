@@ -32,6 +32,7 @@ sub _add_category_from_spec {
     my ($thing, $spec, $noun, $has_cats) = @_;
     my $cat;
     my $raw_cat = '';
+    my $order;
     for (@{ $spec->{tags} // [] }) {
         my $tag_name = ref($_) ? $_->{name} : $_;
         if ($tag_name =~ /^category:(.+)/) {
@@ -40,11 +41,14 @@ sub _add_category_from_spec {
             $cat = ucfirst($1);
             $cat =~ s/-/ /g;
             $cat .= " " . $noun;
+            $order = 50;
             last;
         }
     }
     $cat //= $has_cats ? "Other $noun" : ucfirst($noun); # XXX translatable?
+    $order //= 99;
     $thing->{category} = $cat;
+    $thing->{category_order} = $order;
     $thing->{raw_category} = $raw_cat;
 }
 

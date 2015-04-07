@@ -1,5 +1,12 @@
 Revision history for Perinci-Sub-To-CLIDocData
 
+0.18    2015-04-07 (PERLANCAR)
+
+	- Tweak categories: also categorize common option according to its tag,
+          add 'option_categories' and 'example_categories' key which currently
+          contain the ordering of each category.
+
+
 0.17    2015-04-02 (PERLANCAR)
 
 	- For bool option which we show the positive, use

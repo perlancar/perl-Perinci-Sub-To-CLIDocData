@@ -370,6 +370,7 @@ sub gen_cli_doc_data_from_meta {
                 $opt = {
                     opt_parsed => $ospec->{parsed},
                     orig_opt => $k,
+                    common_opt => $ospec->{common_opt},
                     common_opt_spec => $spec,
                     summary => $show_neg ?
                         $rimeta->langprop({lang=>$lang}, 'summary.alt.bool.not') :

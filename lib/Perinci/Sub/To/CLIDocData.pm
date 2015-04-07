@@ -40,7 +40,7 @@ sub _add_category_from_spec {
             last;
         }
     }
-    $cat //= $has_cats ? "General $noun" : ucfirst($noun); # XXX translatable?
+    $cat //= $has_cats ? "Other $noun" : ucfirst($noun); # XXX translatable?
     $thing->{category} = $cat;
     $thing->{raw_category} = $raw_cat;
 }
@@ -210,8 +210,6 @@ sub gen_cli_doc_data_from_meta {
     # generate list of options
     my %opts;
     {
-        my $has_cats = _has_cats([values %$args_prop]);
-
         my $ospecs = $ggls_res->[3]{'func.specmeta'};
         # separate groupable aliases because they will be merged with the
         # argument options
@@ -237,12 +235,12 @@ sub gen_cli_doc_data_from_meta {
         while (@k) {
             my $k = shift @k;
             my $ospec = $ospecs->{$k};
+            my $opt;
             my $optkey;
 
             if ($ospec->{is_alias} || defined($ospec->{arg})) {
                 my $arg_spec;
                 my $alias_spec;
-                my $opt;
 
                 if ($ospec->{is_alias}) {
                     # non-groupable alias
@@ -337,10 +335,8 @@ sub gen_cli_doc_data_from_meta {
                     $opt->{$_} = $arg_spec->{$_} if defined $arg_spec->{$_};
                 }
 
-                _add_category_from_spec($opt, $arg_spec, "options", $has_cats);
+                _add_category_from_spec($opt, $arg_spec, "options", 1);
                 _add_default_from_arg_spec($opt, $arg_spec);
-
-                $opts{$optkey} = $opt;
 
             } else {
                 # option from common_opts
@@ -361,10 +357,9 @@ sub gen_cli_doc_data_from_meta {
 
                 $optkey = _fmt_opt($spec, $ospec);
                 my $rimeta = rimeta($spec);
-                $opts{$optkey} = {
+                $opt = {
                     opt_parsed => $ospec->{parsed},
                     orig_opt => $k,
-                    category => $has_cats ? "General options" : "Options", # XXX translatable?
                     summary => $show_neg ?
                         $rimeta->langprop({lang=>$lang}, 'summary.alt.bool.not') :
                             $rimeta->langprop({lang=>$lang}, 'summary'),
@@ -376,7 +371,11 @@ sub gen_cli_doc_data_from_meta {
                     (default => $spec->{default}) x !!(exists($spec->{default}) && !$show_neg),
                 };
 
+                _add_category_from_spec($opt, $spec, "options", 1);
+
             }
+
+            $opts{$optkey} = $opt;
         }
 
         # link ungrouped alias to its main opt

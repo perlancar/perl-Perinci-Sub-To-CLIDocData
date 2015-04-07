@@ -1,5 +1,11 @@
 Revision history for Perinci-Sub-To-CLIDocData
 
+0.19    2015-04-07 (PERLANCAR)
+
+	- Include common_opt_spec in common option for more detailed
+	  information about (e.g. for building Configuration POD section).
+
+
 0.18    2015-04-07 (PERLANCAR)
 
 	- Tweak categories: also categorize common option according to its tag,

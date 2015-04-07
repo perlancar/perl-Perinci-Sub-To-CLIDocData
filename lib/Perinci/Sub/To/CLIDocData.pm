@@ -29,7 +29,7 @@ sub _has_cats {
 }
 
 sub _add_category_from_spec {
-    my ($thing, $spec, $noun, $has_cats) = @_;
+    my ($cats_spec, $thing, $spec, $noun, $has_cats) = @_;
     my $cat;
     my $raw_cat = '';
     my $order;
@@ -48,8 +48,7 @@ sub _add_category_from_spec {
     $cat //= $has_cats ? "Other $noun" : ucfirst($noun); # XXX translatable?
     $order //= 99;
     $thing->{category} = $cat;
-    $thing->{category_order} = $order;
-    $thing->{raw_category} = $raw_cat;
+    $cats_spec->{$cat}{order} //= $order;
 }
 
 sub _add_default_from_arg_spec {
@@ -178,7 +177,10 @@ sub gen_cli_doc_data_from_meta {
     $ggls_res->[0] == 200 or return $ggls_res;
 
     my $args_prop = $meta->{args} // {};
-    my $clidocdata = {};
+    my $clidocdata = {
+        option_categories => {},
+        example_categories => {},
+    };
 
     # generate usage line
     {
@@ -342,7 +344,8 @@ sub gen_cli_doc_data_from_meta {
                     $opt->{$_} = $arg_spec->{$_} if defined $arg_spec->{$_};
                 }
 
-                _add_category_from_spec($opt, $arg_spec, "options", 1);
+                _add_category_from_spec($clidocdata->{option_categories},
+                                        $opt, $arg_spec, "options", 1);
                 _add_default_from_arg_spec($opt, $arg_spec);
 
             } else {
@@ -378,7 +381,8 @@ sub gen_cli_doc_data_from_meta {
                     (default => $spec->{default}) x !!(exists($spec->{default}) && !$show_neg),
                 };
 
-                _add_category_from_spec($opt, $spec, "options", 1);
+                _add_category_from_spec($clidocdata->{option_categories},
+                                        $opt, $spec, "options", 1);
 
             }
 
@@ -447,7 +451,8 @@ sub gen_cli_doc_data_from_meta {
                 example_spec => $eg,
             };
             # XXX show result from $eg
-            _add_category_from_spec($egdata, $eg, "examples", $has_cats);
+            _add_category_from_spec($clidocdata->{example_categories},
+                                    $egdata, $eg, "examples", $has_cats);
             push @examples, $egdata;
         }
     }

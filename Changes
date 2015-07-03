@@ -1,5 +1,12 @@
 Revision history for Perinci-Sub-To-CLIDocData
 
+0.21    2015-07-04 (PERLANCAR)
+
+	- Replace option category with categories to allow putting an
+	  option to multiple categories (multiple 'category:Foo' tags), the
+	  old 'category' key is still supported for sometime.
+
+
 0.20    2015-04-07 (PERLANCAR)
 
 	- Forgot to include common_opt in each common option.

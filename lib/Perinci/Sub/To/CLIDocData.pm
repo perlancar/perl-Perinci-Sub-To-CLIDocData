@@ -30,25 +30,26 @@ sub _has_cats {
 
 sub _add_category_from_spec {
     my ($cats_spec, $thing, $spec, $noun, $has_cats) = @_;
-    my $cat;
-    my $raw_cat = '';
-    my $order;
+    my @cats;
     for (@{ $spec->{tags} // [] }) {
         my $tag_name = ref($_) ? $_->{name} : $_;
         if ($tag_name =~ /^category:(.+)/) {
-            $raw_cat = $1;
-
-            $cat = ucfirst($1);
+            my $cat = ucfirst($1);
             $cat =~ s/-/ /g;
             $cat .= " " . $noun;
-            $order = 50;
-            last;
+            push @cats, [$cat, 50]; # name, ordering
         }
     }
-    $cat //= $has_cats ? "Other $noun" : ucfirst($noun); # XXX translatable?
-    $order //= 99;
-    $thing->{category} = $cat;
-    $cats_spec->{$cat}{order} //= $order;
+    if (!@cats) {
+        @cats = [$has_cats ? "Other $noun" : ucfirst($noun), 99]; # XXX translatable?
+    }
+
+    # old, will be removed someday
+    $thing->{category} = $cats[0][0];
+    # new/current
+    $thing->{categories} = [map {$_->[0]} @cats];
+
+    $cats_spec->{$_->[0]}{order} //= $_->[1] for @cats;
 }
 
 sub _add_default_from_arg_spec {

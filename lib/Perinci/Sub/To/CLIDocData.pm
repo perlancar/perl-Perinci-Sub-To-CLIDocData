@@ -443,8 +443,8 @@ sub gen_cli_doc_data_from_meta {
                 }
                 $cmdline = "[[prog]]";
                 for my $arg (@$argv) {
-                    $arg = String::ShellQuote::shell_quote($arg);
-                    $cmdline .= " $arg"; # XXX markup with color?
+                    my $qarg = String::ShellQuote::shell_quote($arg);
+                    $cmdline .= " $qarg"; # XXX markup with color?
                 }
             }
             my $egdata = {

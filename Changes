@@ -1,5 +1,11 @@
 Revision history for Perinci-Sub-To-CLIDocData
 
+0.24    2015-12-17 (PERLANCAR)
+
+	- Use use_pos=>1 option when converting args to argv of examples to
+	  get a nicer command line.
+
+
 0.23    2015-09-23 (PERLANCAR)
 
 	- [Bugfix] Don't modify (quote) the original argv in Rinci

@@ -436,7 +436,7 @@ sub gen_cli_doc_data_from_meta {
                 } else {
                     require Perinci::Sub::ConvertArgs::Argv;
                     my $res = Perinci::Sub::ConvertArgs::Argv::convert_args_to_argv(
-                        args => $eg->{args}, meta => $meta);
+                        args => $eg->{args}, meta => $meta, use_pos => 1);
                     return err($res, 500, "Can't convert args to argv")
                         unless $res->[0] == 200;
                     $argv = $res->[2];

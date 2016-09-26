@@ -1,5 +1,10 @@
 Revision history for Perinci-Sub-To-CLIDocData
 
+0.25    2016-09-26 (PERLANCAR)
+
+	- [ux] Use singular form when showing greedy argument in usage.
+
+
 0.24    2015-12-17 (PERLANCAR)
 
 	- Use use_pos=>1 option when converting args to argv of examples to

@@ -103,7 +103,7 @@ $SPEC{gen_cli_doc_data_from_meta} = {
         'for producing CLI documentation (help/usage/POD)',
     description => <<'_',
 
-This function calls `Perinci::Sub::GetArgs::Argv`'s
+This function calls <pm:Perinci::Sub::GetArgs::Argv>'s
 `gen_getopt_long_spec_from_meta()` (or receive its result as an argument, if
 passed, to avoid calling the function twice) and post-processes it: produce
 command usage line, format the options, include information from metadata, group
@@ -132,7 +132,7 @@ _
             schema  => 'array*', # XXX envres
             description => <<'_',
 
-If you already call `Perinci::Sub::GetArgs::Argv`'s
+If you already call <pm:Perinci::Sub::GetArgs::Argv>'s
 `gen_getopt_long_spec_from_meta()`, you can pass the _full_ enveloped result
 here, to avoid calculating twice. What will be useful for the function is the
 extra result in result metadata (`func.*` keys in `$res->[3]` hash).

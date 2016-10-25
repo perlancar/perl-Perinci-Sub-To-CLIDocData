@@ -351,8 +351,16 @@ sub gen_cli_doc_data_from_meta {
                     $opt->{$_} = $arg_spec->{$_} if defined $arg_spec->{$_};
                 }
 
-                _add_category_from_spec($clidocdata->{option_categories},
-                                        $opt, $arg_spec, "options", 1);
+                {
+                    # we don't want argument options to end up in "Other" like
+                    # --help or -v, they are put at the end. so if an argument
+                    # option does not have category, we'll put it in the "main"
+                    # category.
+                    local $arg_spec->{tags} = ['category:main']
+                        if !$arg_spec->{tags} || !@{$arg_spec->{tags}};
+                    _add_category_from_spec($clidocdata->{option_categories},
+                                            $opt, $arg_spec, "options", 1);
+                }
                 _add_default_from_arg_spec($opt, $arg_spec);
 
             } else {

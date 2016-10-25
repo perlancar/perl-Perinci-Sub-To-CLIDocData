@@ -1,5 +1,10 @@
 Revision history for Perinci-Sub-To-CLIDocData
 
+0.27    2016-10-25 (PERLANCAR)
+
+	- [ux] Show main options first before the other categories.
+
+
 0.26    2016-10-25 (PERLANCAR)
 
 	- [ux] Don't put argument options to 'Other options' category

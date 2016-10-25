@@ -1,5 +1,12 @@
 Revision history for Perinci-Sub-To-CLIDocData
 
+0.26    2016-10-25 (PERLANCAR)
+
+	- [ux] Don't put argument options to 'Other options' category
+	  because they are less prominent, put them instead in 'Main
+	  options'.
+
+
 0.25    2016-09-26 (PERLANCAR)
 
 	- [ux] Use singular form when showing greedy argument in usage.

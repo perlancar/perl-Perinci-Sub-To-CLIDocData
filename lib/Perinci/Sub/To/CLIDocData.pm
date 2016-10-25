@@ -33,11 +33,12 @@ sub _add_category_from_spec {
     my @cats;
     for (@{ $spec->{tags} // [] }) {
         my $tag_name = ref($_) ? $_->{name} : $_;
-        if ($tag_name =~ /^category:(.+)/) {
-            my $cat = ucfirst($1);
+        if ($tag_name =~ /^category(\d+)?:(.+)/) {
+            my $cat = ucfirst($2);
+            my $ordering = $1 // 50;
             $cat =~ s/-/ /g;
             $cat .= " " . $noun;
-            push @cats, [$cat, 50]; # name, ordering
+            push @cats, [$cat, $ordering]; # name, ordering
         }
     }
     if (!@cats) {
@@ -356,7 +357,7 @@ sub gen_cli_doc_data_from_meta {
                     # --help or -v, they are put at the end. so if an argument
                     # option does not have category, we'll put it in the "main"
                     # category.
-                    local $arg_spec->{tags} = ['category:main']
+                    local $arg_spec->{tags} = ['category0:main']
                         if !$arg_spec->{tags} || !@{$arg_spec->{tags}};
                     _add_category_from_spec($clidocdata->{option_categories},
                                             $opt, $arg_spec, "options", 1);

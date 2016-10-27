@@ -1,5 +1,13 @@
 Revision history for Perinci-Sub-To-CLIDocData
 
+0.28    2016-10-27 (PERLANCAR)
+
+	- No functional changes.
+
+	- [dist] Bump prereq version Perinci::Sub::GetArgs::Argv to 0.75 to
+	  grok 'hidden' & 'hidden-cli' argument spec tags.
+
+
 0.27    2016-10-25 (PERLANCAR)
 
 	- [ux] Show main options first before the other categories.

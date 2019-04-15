@@ -205,7 +205,7 @@ sub gen_cli_doc_data_from_meta {
             }
             $pos++;
             next unless defined($arg);
-            if ($arg_spec->{greedy}) {
+            if ($arg_spec->{slurpy} // $arg_spec->{greedy}) {
                 # try to find the singular form
                 $arg = $arg_spec->{'x.name.singular'}
                     if $arg_spec->{'x.name.is_plural'} &&
@@ -216,7 +216,7 @@ sub gen_cli_doc_data_from_meta {
             } else {
                 push @args, "[$arg]";
             }
-            $args[-1] .= " ..." if $arg_spec->{greedy};
+            $args[-1] .= " ..." if ($arg_spec->{slurpy} // $arg_spec->{greedy});
             delete $args_prop{$arg};
         }
         unshift @args, "[options]" if keys(%args_prop) || keys(%$common_opts); # XXX translatable?
@@ -348,7 +348,7 @@ sub gen_cli_doc_data_from_meta {
                 }
 
                 # include keys from arg_spec
-                for (qw/req pos greedy is_password links tags/) {
+                for (qw/req pos slurpy greedy is_password links tags/) {
                     $opt->{$_} = $arg_spec->{$_} if defined $arg_spec->{$_};
                 }
 

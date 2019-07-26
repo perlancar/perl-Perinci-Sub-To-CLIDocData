@@ -262,6 +262,8 @@ sub gen_cli_doc_data_from_meta {
                 if ($ospec->{is_alias}) {
                     # non-groupable alias
 
+                    my $real_opt_ospec = $ospecs->{ $ospec->{alias_for} };
+
                     $arg_spec = $args_prop->{ $ospec->{arg} };
                     $alias_spec = $arg_spec->{cmdline_aliases}{$ospec->{alias}};
                     my $rimeta = rimeta($alias_spec);
@@ -272,7 +274,7 @@ sub gen_cli_doc_data_from_meta {
                         is_alias => 1,
                         alias_for => $ospec->{alias_for},
                         summary => $rimeta->langprop({lang=>$lang}, 'summary') //
-                            "Alias for "._dash_prefix($ospec->{parsed}{opts}[0]),
+                            "Alias for "._dash_prefix($real_opt_ospec->{parsed}{opts}[0]),
                         description =>
                             $rimeta->langprop({lang=>$lang}, 'description'),
                     };

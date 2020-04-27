@@ -438,7 +438,7 @@ sub gen_cli_doc_data_from_meta {
             # only inlude common options that are not a specific action that are
             # invoked on its own
 
-            my $copt = defined $ospecmeta->{common_opt} ? $common_opts->{ $ospecmeta->{common_opt} };
+            my $copt = defined $ospecmeta->{common_opt} ? $common_opts->{ $ospecmeta->{common_opt} } : undef;
             next if defined $ospecmeta->{common_opt} && $copt->{usage};
             push @opts, "[".Getopt::Long::Util::humanize_getopt_long_opt_spec({
                 separator=>" | ",

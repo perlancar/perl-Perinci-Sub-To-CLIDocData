@@ -1,6 +1,8 @@
 package Perinci::Sub::To::CLIDocData;
 
+# AUTHORITY
 # DATE
+# DIST
 # VERSION
 
 use 5.010001;
@@ -184,49 +186,8 @@ sub gen_cli_doc_data_from_meta {
         example_categories => {},
     };
 
-    # generate usage line
-    {
-        my @args;
-        my %args_prop = %$args_prop; # copy because we want to iterate & delete
-        my $max_pos = -1;
-        for (values %args_prop) {
-            $max_pos = $_->{pos}
-                if defined($_->{pos}) && $_->{pos} > $max_pos;
-        }
-        my $pos = 0;
-        while ($pos <= $max_pos) {
-            my ($arg, $arg_spec);
-            for (keys %args_prop) {
-                $arg_spec = $args_prop{$_};
-                if (defined($arg_spec->{pos}) && $arg_spec->{pos}==$pos) {
-                    $arg = $_;
-                    last;
-                }
-            }
-            $pos++;
-            next unless defined($arg);
-            if ($arg_spec->{slurpy} // $arg_spec->{greedy}) {
-                # try to find the singular form
-                $arg = $arg_spec->{'x.name.singular'}
-                    if $arg_spec->{'x.name.is_plural'} &&
-                    defined $arg_spec->{'x.name.singular'};
-            }
-            if ($arg_spec->{req}) {
-                push @args, "<$arg>";
-            } else {
-                push @args, "[$arg]";
-            }
-            $args[-1] .= " ..." if ($arg_spec->{slurpy} // $arg_spec->{greedy});
-            delete $args_prop{$arg};
-        }
-        unshift @args, "[options]" if keys(%args_prop) || keys(%$common_opts); # XXX translatable?
-        $clidocdata->{usage_line} = "[[prog]]".
-            (@args ? " ".join(" ", @args) : "");
-    }
-
-    # generate list of options
     my %opts;
-    {
+  GEN_LIST_OF_OPTIONS: {
         my $ospecs = $ggls_res->[3]{'func.specmeta'};
         # separate groupable aliases because they will be merged with the
         # argument options
@@ -426,8 +387,68 @@ sub gen_cli_doc_data_from_meta {
             }
         }
 
-    }
+    } # GEN_LIST_OF_OPTIONS
     $clidocdata->{opts} = \%opts;
+
+  GEN_USAGE_LINE: {
+        my @args;
+        my %args_prop = %$args_prop; # copy because we want to iterate & delete
+        my $max_pos = -1;
+        for (values %args_prop) {
+            $max_pos = $_->{pos}
+                if defined($_->{pos}) && $_->{pos} > $max_pos;
+        }
+        my $pos = 0;
+        while ($pos <= $max_pos) {
+            my ($arg, $arg_spec);
+            for (keys %args_prop) {
+                $arg_spec = $args_prop{$_};
+                if (defined($arg_spec->{pos}) && $arg_spec->{pos}==$pos) {
+                    $arg = $_;
+                    last;
+                }
+            }
+            $pos++;
+            next unless defined($arg);
+            if ($arg_spec->{slurpy} // $arg_spec->{greedy}) {
+                # try to find the singular form
+                $arg = $arg_spec->{'x.name.singular'}
+                    if $arg_spec->{'x.name.is_plural'} &&
+                    defined $arg_spec->{'x.name.singular'};
+            }
+            if ($arg_spec->{req}) {
+                push @args, "<$arg>";
+            } else {
+                push @args, "[$arg]";
+            }
+            $args[-1] .= " ..." if ($arg_spec->{slurpy} // $arg_spec->{greedy});
+            delete $args_prop{$arg};
+        }
+
+        # XXX utilize information from args_rels
+
+        require Getopt::Long::Util;
+        my @opts;
+        for my $ospec (sort keys %{ $ggls_res->[3]{'func.specmeta'} }) {
+            my $ospecmeta = $ggls_res->[3]{'func.specmeta'}{$ospec};
+            my $argprop = defined $ospecmeta->{arg} ? $args_prop{ $ospecmeta->{arg} } : undef;
+            # only include args that have not been mentioned in positional
+            next if defined $ospecmeta->{arg} && !$argprop;
+            # only inlude common options that are not a specific action that are
+            # invoked on its own
+            next if defined $ospecmeta->{common_opt} && $common_opts->{ $ospecmeta->{common_opt} }{usage};
+            push @opts, "[".Getopt::Long::Util::humanize_getopt_long_opt_spec({
+                separator=>" | ",
+                value_label=>($argprop->{'x.cli.opt_value_label'} // $argprop->{caption}),
+            }, $ospec)."]";
+        }
+
+        $clidocdata->{compact_usage_line} = "[[prog]]".
+            (keys(%args_prop) || keys(%$common_opts) ? " [options]" : ""). # XXX translatable?
+            (@args ? " ".join(" ", @args) : "");
+        $clidocdata->{usage_line} = "[[prog]]".
+            (@args ? " ".join(" ", @opts, @args) : "");
+    } # GEN_USAGE_LINE
 
     # filter and format examples
     my @examples;
@@ -499,6 +520,11 @@ Sample result:
 
 For a more complete sample, see function metadata for C<demo_cli_opts> in
 L<Perinci::Examples::CLI>.
+
+
+=head1 RINCI
+
+Observed function argument attribute: C<x.cli.opt_value_label>, C<caption>, C<>.
 
 
 =head1 SEE ALSO

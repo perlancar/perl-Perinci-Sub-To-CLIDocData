@@ -454,7 +454,7 @@ sub gen_cli_doc_data_from_meta {
             (keys(%args_prop) || keys(%$common_opts) ? " [options]" : ""). # XXX translatable?
             (@args ? " ".join(" ", @args) : "");
         $clidocdata->{usage_line} = "[[prog]]".
-            (@opts+@args ? " ".join(" ", @opts, @args) : "");
+            (@opts+@args ? " ".join(" ", @opts, (@opts && @args ? ("--") : ()), @args) : "");
     } # GEN_USAGE_LINE
 
     # filter and format examples

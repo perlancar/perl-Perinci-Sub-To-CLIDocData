@@ -429,7 +429,12 @@ sub gen_cli_doc_data_from_meta {
 
         require Getopt::Long::Util;
         my @opts;
-        for my $ospec (sort keys %{ $ggls_res->[3]{'func.specmeta'} }) {
+        my %opt_locations; # key=argname
+        for my $ospec (sort {
+            ($ggls_res->[3]{'func.specmeta'}{$a}{is_neg} ? 1:0) <=> ($ggls_res->[3]{'func.specmeta'}{$b}{is_neg} ? 1:0) ||
+            ($ggls_res->[3]{'func.specmeta'}{$a}{is_alias} ? 1:0) <=> ($ggls_res->[3]{'func.specmeta'}{$b}{is_alias} ? 1:0) ||
+                $a cmp $b
+            } keys %{ $ggls_res->[3]{'func.specmeta'} }) {
             my $ospecmeta = $ggls_res->[3]{'func.specmeta'}{$ospec};
 
             my $argprop = defined $ospecmeta->{arg} ? $args_prop{ $ospecmeta->{arg} } : undef;
@@ -438,23 +443,38 @@ sub gen_cli_doc_data_from_meta {
             # only inlude common options that are not a specific action that are
             # invoked on its own
 
+            #use DD; print "ospec: $ospec, ospecmeta: "; dd $ospecmeta;
+
             my $copt = defined $ospecmeta->{common_opt} ? $common_opts->{ $ospecmeta->{common_opt} } : undef;
             next if defined $ospecmeta->{common_opt} && $copt->{usage};
-            push @opts, "[".Getopt::Long::Util::humanize_getopt_long_opt_spec({
+            my $opt = Getopt::Long::Util::humanize_getopt_long_opt_spec({
                 separator=>" | ",
                 value_label=>(
                     $argprop ?
                         ($argprop->{'x.cli.opt_value_label'} // $argprop->{caption}) :
                         ($copt->{value_label})
                     ),
-            }, $ospec)."]";
+            }, $ospec);
+
+            # put option from arg and its cmdline aliases together as alternates
+            if ($ospecmeta->{is_alias} || $ospecmeta->{is_neg}) {
+                push @{ $opts[ $opt_locations{$ospecmeta->{arg}} ] }, $opt;
+            } else {
+                $opt_locations{$ospecmeta->{arg} // $ospec} //= scalar @opts;
+                push @opts, [$opt];
+            }
         }
 
         $clidocdata->{compact_usage_line} = "[[prog]]".
             (keys(%args_prop) || keys(%$common_opts) ? " [options]" : ""). # XXX translatable?
             (@args ? " ".join(" ", @args) : "");
         $clidocdata->{usage_line} = "[[prog]]".
-            (@opts+@args ? " ".join(" ", @opts, (@opts && @args ? ("--") : ()), @args) : "");
+            (@opts+@args ? " ".
+             join(" ",
+                  (map { "[". join(" | ", @$_) . "]" } @opts),
+                  (@opts && @args ? ("--") : ()),
+                  @args,
+              ) : "");
     } # GEN_USAGE_LINE
 
     # filter and format examples

@@ -441,7 +441,7 @@ sub gen_cli_doc_data_from_meta {
             my $copt = defined $ospecmeta->{common_opt} ? $common_opts->{ $ospecmeta->{common_opt} } : undef;
             next if defined $ospecmeta->{common_opt} && $copt->{usage};
             push @opts, "[".Getopt::Long::Util::humanize_getopt_long_opt_spec({
-                separator=>" | ",
+                separator=>"|",
                 value_label=>(
                     $argprop ?
                         ($argprop->{'x.cli.opt_value_label'} // $argprop->{caption}) :

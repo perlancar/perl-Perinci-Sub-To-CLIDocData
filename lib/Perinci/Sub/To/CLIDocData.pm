@@ -390,6 +390,8 @@ sub gen_cli_doc_data_from_meta {
     } # GEN_LIST_OF_OPTIONS
     $clidocdata->{opts} = \%opts;
 
+    #use DD; dd $clidocdata;
+
   GEN_USAGE_LINE: {
         my @args;
         my %args_prop = %$args_prop; # copy because we want to iterate & delete
@@ -443,16 +445,29 @@ sub gen_cli_doc_data_from_meta {
             # only inlude common options that are not a specific action that are
             # invoked on its own
 
-            #use DD; print "ospec: $ospec, ospecmeta: "; dd $ospecmeta; print "argprop: "; dd $argprop;
-
             my $copt = defined $ospecmeta->{common_opt} ? $common_opts->{ $ospecmeta->{common_opt} } : undef;
+
+            #use DD; print "ospec: $ospec, ospecmeta: ", DD::dmp($ospecmeta), ", argprop: ", DD::dmp($argprop), ", copt: ", DD::dmp($copt), "\n";
+
             next if defined $ospecmeta->{common_opt} && $copt->{usage};
+            my $caption_from_schema;
+            if ($argprop && $argprop->{schema}) {
+                my $type = $argprop->{schema}[0];
+                my $cset = $argprop->{schema}[1];
+                if ($type eq 'array' && $cset->{of}) {
+                    $caption_from_schema = $cset->{of}[0];
+                } elsif ($type eq 'hash' && $cset->{of}) {
+                    $caption_from_schema = $cset->{of}[0];
+                } else {
+                    $caption_from_schema = $type;
+                }
+            }
             my $opt = Getopt::Long::Util::humanize_getopt_long_opt_spec({
                 separator=>"|",
                 value_label=>(
                     $argprop ?
-                        ($argprop->{'x.cli.opt_value_label'} // $argprop->{caption}) :
-                        ($copt->{value_label})
+                        ($argprop->{'x.cli.opt_value_label'} // $argprop->{caption} // $caption_from_schema) :
+                        $copt->{value_label}
                     ),
             }, $ospec);
 

@@ -453,12 +453,14 @@ sub gen_cli_doc_data_from_meta {
 
             next if defined $ospecmeta->{common_opt} && $copt->{usage};
             my $caption_from_schema;
-            if ($argprop && $argprop->{schema}) {
+            if ($argprop && $argprop->{schema} &&
+                    ref $argprop->{schema} eq 'ARRAY' # ignore non-normalized schema for now
+                ) {
                 my $type = $argprop->{schema}[0];
                 my $cset = $argprop->{schema}[1];
-                if ($type eq 'array' && $cset->{of}) {
+                if ($type eq 'array' && $cset->{of} && ref $cset->{of} eq 'ARRAY') {
                     $caption_from_schema = $cset->{of}[0];
-                } elsif ($type eq 'hash' && $cset->{of}) {
+                } elsif ($type eq 'hash' && $cset->{of} && ref $cset->{of} eq 'ARRAY') {
                     $caption_from_schema = $cset->{of}[0];
                 } else {
                     $caption_from_schema = $type;
@@ -467,7 +469,9 @@ sub gen_cli_doc_data_from_meta {
             my $opt = Getopt::Long::Util::humanize_getopt_long_opt_spec({
                 separator=>"|",
                 value_label=>(
-                    $argprop ?
+                    $ospecmeta->{is_json} ? 'json' :
+                    $ospecmeta->{is_yaml} ? 'yaml' :
+                        $argprop ?
                         ($argprop->{'x.cli.opt_value_label'} // $argprop->{caption} // $caption_from_schema) :
                         $copt->{value_label}
                     ),

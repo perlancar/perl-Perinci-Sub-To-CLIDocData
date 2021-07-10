@@ -1,3 +1,11 @@
+0.297   2021-07-10  Released-By: PERLANCAR; Urgency: medium
+
+        - [ux] More tweaks to usage line: produce POD-formatted version in
+          'usage_line.alt.fmt.pod', group option with its JSON/YAML-variant
+          together, use nicer value labels for option (use type from schema, use
+          'json' and 'yaml' for JSON/YAML variant).
+
+
 0.296   2021-07-08  Released-By: PERLANCAR; Urgency: medium
 
 	- [ux] In usage line, group command-line aliases or negative

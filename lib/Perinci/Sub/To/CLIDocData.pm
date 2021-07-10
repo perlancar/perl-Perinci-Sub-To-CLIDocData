@@ -390,10 +390,10 @@ sub gen_cli_doc_data_from_meta {
     } # GEN_LIST_OF_OPTIONS
     $clidocdata->{opts} = \%opts;
 
-    #use DD; dd $clidocdata;
-
   GEN_USAGE_LINE: {
-        my @args;
+        my @plain_args;
+        my @pod_args;
+
         my %args_prop = %$args_prop; # copy because we want to iterate & delete
         my $max_pos = -1;
         for (values %args_prop) {
@@ -419,18 +419,22 @@ sub gen_cli_doc_data_from_meta {
                     defined $arg_spec->{'x.name.singular'};
             }
             if ($arg_spec->{req}) {
-                push @args, "<$arg>";
+                push @plain_args, "<$arg>";
+                push @pod_args  , "E<lt>I<$arg>E<gt>";
             } else {
-                push @args, "[$arg]";
+                push @plain_args, "[$arg]";
+                push @pod_args  , "[I<$arg>]";
             }
-            $args[-1] .= " ..." if ($arg_spec->{slurpy} // $arg_spec->{greedy});
+            $plain_args[-1] .= " ..." if ($arg_spec->{slurpy} // $arg_spec->{greedy});
+            $pod_args  [-1] .= " ..." if ($arg_spec->{slurpy} // $arg_spec->{greedy});
             delete $args_prop{$arg};
         }
 
         # XXX utilize information from args_rels
 
         require Getopt::Long::Util;
-        my @opts;
+        my @plain_opts;
+        my @pod_opts;
         my %opt_locations; # key=argname
         for my $ospec (sort {
             ($ggls_res->[3]{'func.specmeta'}{$a}{is_neg} ? 1:0) <=> ($ggls_res->[3]{'func.specmeta'}{$b}{is_neg} ? 1:0) ||
@@ -470,7 +474,7 @@ sub gen_cli_doc_data_from_meta {
                     $caption_from_schema = $type;
                 }
             }
-            use DD; my $hres = Getopt::Long::Util::humanize_getopt_long_opt_spec(dd {
+            my $hres = Getopt::Long::Util::humanize_getopt_long_opt_spec({
                 extended=>1,
                 separator=>"|",
                 value_label=>(
@@ -481,26 +485,37 @@ sub gen_cli_doc_data_from_meta {
                         $copt->{value_label}
                     ),
             }, $ospec);
+            my $plain_opt = $hres->{plaintext};
+            my $pod_opt   = $hres->{pod};
 
             # put option from arg and its cmdline aliases or its json/yaml
             # version and its negation version together as alternates
             if ($ospecmeta->{is_alias} || $ospecmeta->{is_neg} || $ospecmeta->{is_json} || $ospecmeta->{is_yaml}) {
-                push @{ $opts[ $opt_locations{$ospecmeta->{arg}} ] }, $opt;
+                push @{ $plain_opts[ $opt_locations{$ospecmeta->{arg}} ] }, $plain_opt;
+                push @{ $pod_opts  [ $opt_locations{$ospecmeta->{arg}} ] }, $pod_opt;
             } else {
-                $opt_locations{$ospecmeta->{arg} // $ospec} //= scalar @opts;
-                push @opts, [$opt];
+                $opt_locations{$ospecmeta->{arg} // $ospec} //= scalar @plain_opts;
+                push @plain_opts, [$plain_opt];
+                push @pod_opts  , [$pod_opt  ];
             }
         }
 
         $clidocdata->{compact_usage_line} = "[[prog]]".
             (keys(%args_prop) || keys(%$common_opts) ? " [options]" : ""). # XXX translatable?
-            (@args ? " ".join(" ", @args) : "");
+            (@plain_args ? " ".join(" ", @plain_args) : "");
         $clidocdata->{usage_line} = "[[prog]]".
-            (@opts+@args ? " ".
+            (@plain_opts+@plain_args ? " ".
              join(" ",
-                  (map { "[". join("|", @$_) . "]" } @opts),
-                  (@opts && @args ? ("--") : ()),
-                  @args,
+                  (map { "[". join("|", @$_) . "]" } @plain_opts),
+                  (@plain_opts && @plain_args ? ("--") : ()),
+                  @plain_args,
+              ) : "");
+        $clidocdata->{'usage_line.alt.fmt.pod'} = "B<[[prog]]>".
+            (@pod_opts+@pod_args ? " ".
+             join(" ",
+                  (map { "[". join("|", @$_) . "]" } @pod_opts),
+                  (@pod_opts && @pod_args ? ("--") : ()),
+                  @pod_args,
               ) : "");
     } # GEN_USAGE_LINE
 

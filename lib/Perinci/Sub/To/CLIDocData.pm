@@ -435,6 +435,8 @@ sub gen_cli_doc_data_from_meta {
         for my $ospec (sort {
             ($ggls_res->[3]{'func.specmeta'}{$a}{is_neg} ? 1:0) <=> ($ggls_res->[3]{'func.specmeta'}{$b}{is_neg} ? 1:0) ||
             ($ggls_res->[3]{'func.specmeta'}{$a}{is_alias} ? 1:0) <=> ($ggls_res->[3]{'func.specmeta'}{$b}{is_alias} ? 1:0) ||
+            ($ggls_res->[3]{'func.specmeta'}{$a}{is_json} ? 1:0) <=> ($ggls_res->[3]{'func.specmeta'}{$b}{is_json} ? 1:0) ||
+            ($ggls_res->[3]{'func.specmeta'}{$a}{is_yaml} ? 1:0) <=> ($ggls_res->[3]{'func.specmeta'}{$b}{is_yaml} ? 1:0) ||
                 $a cmp $b
             } keys %{ $ggls_res->[3]{'func.specmeta'} }) {
             my $ospecmeta = $ggls_res->[3]{'func.specmeta'}{$ospec};
@@ -471,8 +473,9 @@ sub gen_cli_doc_data_from_meta {
                     ),
             }, $ospec);
 
-            # put option from arg and its cmdline aliases together as alternates
-            if ($ospecmeta->{is_alias} || $ospecmeta->{is_neg}) {
+            # put option from arg and its cmdline aliases or its json/yaml
+            # version and its negation version together as alternates
+            if ($ospecmeta->{is_alias} || $ospecmeta->{is_neg} || $ospecmeta->{is_json} || $ospecmeta->{is_yaml}) {
                 push @{ $opts[ $opt_locations{$ospecmeta->{arg}} ] }, $opt;
             } else {
                 $opt_locations{$ospecmeta->{arg} // $ospec} //= scalar @opts;

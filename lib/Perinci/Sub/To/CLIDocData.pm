@@ -443,12 +443,12 @@ sub gen_cli_doc_data_from_meta {
             # only inlude common options that are not a specific action that are
             # invoked on its own
 
-            #use DD; print "ospec: $ospec, ospecmeta: "; dd $ospecmeta;
+            #use DD; print "ospec: $ospec, ospecmeta: "; dd $ospecmeta; print "argprop: "; dd $argprop;
 
             my $copt = defined $ospecmeta->{common_opt} ? $common_opts->{ $ospecmeta->{common_opt} } : undef;
             next if defined $ospecmeta->{common_opt} && $copt->{usage};
             my $opt = Getopt::Long::Util::humanize_getopt_long_opt_spec({
-                separator=>" | ",
+                separator=>"|",
                 value_label=>(
                     $argprop ?
                         ($argprop->{'x.cli.opt_value_label'} // $argprop->{caption}) :
@@ -471,7 +471,7 @@ sub gen_cli_doc_data_from_meta {
         $clidocdata->{usage_line} = "[[prog]]".
             (@opts+@args ? " ".
              join(" ",
-                  (map { "[". join(" | ", @$_) . "]" } @opts),
+                  (map { "[". join("|", @$_) . "]" } @opts),
                   (@opts && @args ? ("--") : ()),
                   @args,
               ) : "");

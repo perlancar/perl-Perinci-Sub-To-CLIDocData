@@ -458,15 +458,20 @@ sub gen_cli_doc_data_from_meta {
                 ) {
                 my $type = $argprop->{schema}[0];
                 my $cset = $argprop->{schema}[1];
-                if ($type eq 'array' && $cset->{of} && ref $cset->{of} eq 'ARRAY') {
-                    $caption_from_schema = $cset->{of}[0];
-                } elsif ($type eq 'hash' && $cset->{of} && ref $cset->{of} eq 'ARRAY') {
-                    $caption_from_schema = $cset->{of}[0];
+                if ($type eq 'array') {
+                    if ($cset->{of} && ref $cset->{of} eq 'ARRAY') {
+                        $caption_from_schema = $cset->{of}[0];
+                    }
+                } elsif ($type eq 'hash') {
+                    if ($cset->{of} && ref $cset->{of} eq 'ARRAY') {
+                        $caption_from_schema = $cset->{of}[0];
+                    }
                 } else {
                     $caption_from_schema = $type;
                 }
             }
-            my $opt = Getopt::Long::Util::humanize_getopt_long_opt_spec({
+            use DD; my $hres = Getopt::Long::Util::humanize_getopt_long_opt_spec(dd {
+                extended=>1,
                 separator=>"|",
                 value_label=>(
                     $ospecmeta->{is_json} ? 'json' :

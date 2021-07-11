@@ -435,7 +435,7 @@ sub gen_cli_doc_data_from_meta {
         require Getopt::Long::Util;
         my @plain_opts;
         my @pod_opts;
-        my %opt_locations; # key=argname
+        my %opt_locations; # key=$ARGNAME or "common:$SOMEKEY"
         for my $ospec (sort {
             ($ggls_res->[3]{'func.specmeta'}{$a}{is_neg} ? 1:0) <=> ($ggls_res->[3]{'func.specmeta'}{$b}{is_neg} ? 1:0) ||
             ($ggls_res->[3]{'func.specmeta'}{$a}{is_alias} ? 1:0) <=> ($ggls_res->[3]{'func.specmeta'}{$b}{is_alias} ? 1:0) ||
@@ -488,13 +488,24 @@ sub gen_cli_doc_data_from_meta {
             my $plain_opt = $hres->{plaintext};
             my $pod_opt   = $hres->{pod};
 
-            # put option from arg and its cmdline aliases or its json/yaml
-            # version and its negation version together as alternates
-            if ($ospecmeta->{is_alias} || $ospecmeta->{is_neg} || $ospecmeta->{is_json} || $ospecmeta->{is_yaml}) {
-                push @{ $plain_opts[ $opt_locations{$ospecmeta->{arg}} ] }, $plain_opt;
-                push @{ $pod_opts  [ $opt_locations{$ospecmeta->{arg}} ] }, $pod_opt;
+            my $key;
+            my $do_group;
+            if ($copt && defined $copt->{key}) {
+                # group common options by key.
+                $key = "00common:" . $copt->{key};
+                $do_group++;
+            } elsif ($ospecmeta->{is_alias} || $ospecmeta->{is_neg} || $ospecmeta->{is_json} || $ospecmeta->{is_yaml}) {
+                # put option from arg and its cmdline aliases or its json/yaml
+                # version and its negation version together as alternates.
+                $key = $ospecmeta->{arg};
+                $do_group++;
+            }
+            $key //= $ospec;
+            $opt_locations{$key} //= scalar @plain_opts;
+            if ($do_group) {
+                push @{ $plain_opts[ $opt_locations{$key} ] }, $plain_opt;
+                push @{ $pod_opts  [ $opt_locations{$key} ] }, $pod_opt;
             } else {
-                $opt_locations{$ospecmeta->{arg} // $ospec} //= scalar @plain_opts;
                 push @plain_opts, [$plain_opt];
                 push @pod_opts  , [$pod_opt  ];
             }

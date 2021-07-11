@@ -453,8 +453,6 @@ sub gen_cli_doc_data_from_meta {
 
             my $copt = defined $ospecmeta->{common_opt} ? $common_opts->{ $ospecmeta->{common_opt} } : undef;
 
-            #use DD; print "ospec: $ospec, ospecmeta: ", DD::dmp($ospecmeta), ", argprop: ", DD::dmp($argprop), ", copt: ", DD::dmp($copt), "\n";
-
             next if defined $ospecmeta->{common_opt} && $copt->{usage};
             my $caption_from_schema;
             if ($argprop && $argprop->{schema} &&
@@ -489,26 +487,22 @@ sub gen_cli_doc_data_from_meta {
             my $pod_opt   = $hres->{pod};
 
             my $key;
-            my $do_group;
             if ($copt && defined $copt->{key}) {
                 # group common options by key.
                 $key = "00common:" . $copt->{key};
-                $do_group++;
             } elsif ($ospecmeta->{is_alias} || $ospecmeta->{is_neg} || $ospecmeta->{is_json} || $ospecmeta->{is_yaml}) {
                 # put option from arg and its cmdline aliases or its json/yaml
                 # version and its negation version together as alternates.
                 $key = $ospecmeta->{arg};
-                $do_group++;
-            }
-            $key //= $ospec;
-            $opt_locations{$key} //= scalar @plain_opts;
-            if ($do_group) {
-                push @{ $plain_opts[ $opt_locations{$key} ] }, $plain_opt;
-                push @{ $pod_opts  [ $opt_locations{$key} ] }, $pod_opt;
             } else {
-                push @plain_opts, [$plain_opt];
-                push @pod_opts  , [$pod_opt  ];
+                $key = $ospec;
             }
+            $key =~ s/_/-/g;
+
+            $opt_locations{$key} //= scalar @plain_opts;
+            push @{ $plain_opts[ $opt_locations{$key} ] }, $plain_opt;
+            push @{ $pod_opts  [ $opt_locations{$key} ] }, $pod_opt;
+            #use Data::Dmp; print "key: $key, ospec: $ospec, ospecmeta: ", dmp($ospecmeta), ", argprop: ", dmp($argprop), ", copt: ", dmp($copt), "\n";
         }
 
         $clidocdata->{compact_usage_line} = "[[prog]]".

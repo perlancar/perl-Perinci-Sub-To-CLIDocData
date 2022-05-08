@@ -1,16 +1,16 @@
 package Perinci::Sub::To::CLIDocData;
 
-# AUTHORITY
-# DATE
-# DIST
-# VERSION
-
 use 5.010001;
 use strict;
 use warnings;
 
 use Perinci::Object;
 use Perinci::Sub::Util qw(err);
+
+# AUTHORITY
+# DATE
+# DIST
+# VERSION
 
 our %SPEC;
 
@@ -496,6 +496,7 @@ sub gen_cli_doc_data_from_meta {
                 $key = $ospecmeta->{arg};
             } else {
                 $key = $ospec;
+                $key =~ s/[=:].+\z//;
             }
             $key =~ s/_/-/g;
 

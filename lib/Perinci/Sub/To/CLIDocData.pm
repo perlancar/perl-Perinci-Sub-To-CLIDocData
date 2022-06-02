@@ -490,15 +490,15 @@ sub gen_cli_doc_data_from_meta {
             if ($copt && defined $copt->{key}) {
                 # group common options by key.
                 $key = "00common:" . $copt->{key};
-            } elsif ($ospecmeta->{is_alias} || $ospecmeta->{is_neg} || $ospecmeta->{is_json} || $ospecmeta->{is_yaml}) {
-                # put option from arg and its cmdline aliases or its json/yaml
-                # version and its negation version together as alternates.
+            } elsif (defined $ospecmeta->{arg}) {
                 $key = $ospecmeta->{arg};
             } else {
                 $key = $ospec;
                 $key =~ s/[=:].+\z//;
             }
             $key =~ s/_/-/g;
+
+            #say "D:ospec=$ospec -> key=$key, ospecmeta->{arg}=$ospecmeta->{arg}";
 
             $opt_locations{$key} //= scalar @plain_opts;
             push @{ $plain_opts[ $opt_locations{$key} ] }, $plain_opt;

@@ -3,6 +3,7 @@ package Perinci::Sub::To::CLIDocData;
 use 5.010001;
 use strict;
 use warnings;
+use Log::ger;
 
 use Perinci::Object;
 use Perinci::Sub::Util qw(err);
@@ -461,6 +462,7 @@ sub gen_cli_doc_data_from_meta {
                 ) {
                 $type = $argprop->{schema}[0];
                 $cset = $argprop->{schema}[1];
+                #log_trace "argprop=%s, type=%s", $argprop, $type;
                 if ($type eq 'array') {
                     if ($cset->{of} && ref $cset->{of} eq 'ARRAY') {
                         $caption_from_schema = $cset->{of}[0];
@@ -486,7 +488,7 @@ sub gen_cli_doc_data_from_meta {
                 value_label_link=>(
                     $ospecmeta->{is_json} ? undef :
                     $ospecmeta->{is_yaml} ? undef :
-                    defined($type) && Module::Installed::Tiny::module_installed("Sah::Schema::$type") ? "Sah::Schema::$type" : undef
+                    defined($caption_from_schema) && Module::Installed::Tiny::module_installed("Sah::Schema::$caption_from_schema") ? "Sah::Schema::$caption_from_schema" : undef
                 ),
             }, $ospec);
             my $plain_opt = $hres->{plaintext};

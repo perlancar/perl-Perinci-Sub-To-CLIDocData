@@ -433,6 +433,7 @@ sub gen_cli_doc_data_from_meta {
         # XXX utilize information from args_rels
 
         require Getopt::Long::Util;
+        require Module::Installed::Tiny;
         my @plain_opts;
         my @pod_opts;
         my %opt_locations; # key=$ARGNAME or "common:$SOMEKEY"
@@ -454,12 +455,12 @@ sub gen_cli_doc_data_from_meta {
             my $copt = defined $ospecmeta->{common_opt} ? $common_opts->{ $ospecmeta->{common_opt} } : undef;
 
             next if defined $ospecmeta->{common_opt} && $copt->{usage};
-            my $caption_from_schema;
+            my ($caption_from_schema, $type, $cset);
             if ($argprop && $argprop->{schema} &&
                     ref $argprop->{schema} eq 'ARRAY' # ignore non-normalized schema for now
                 ) {
-                my $type = $argprop->{schema}[0];
-                my $cset = $argprop->{schema}[1];
+                $type = $argprop->{schema}[0];
+                $cset = $argprop->{schema}[1];
                 if ($type eq 'array') {
                     if ($cset->{of} && ref $cset->{of} eq 'ARRAY') {
                         $caption_from_schema = $cset->{of}[0];
@@ -481,7 +482,12 @@ sub gen_cli_doc_data_from_meta {
                         $argprop ?
                         ($argprop->{'x.cli.opt_value_label'} // $argprop->{caption} // $caption_from_schema) :
                         $copt->{value_label}
-                    ),
+                ),
+                value_label_link=>(
+                    $ospecmeta->{is_json} ? undef :
+                    $ospecmeta->{is_yaml} ? undef :
+                    defined($type) && Module::Installed::Tiny::module_installed("Sah::Schema::$type") ? "Sah::Schema::$type" : undef
+                ),
             }, $ospec);
             my $plain_opt = $hres->{plaintext};
             my $pod_opt   = $hres->{pod};

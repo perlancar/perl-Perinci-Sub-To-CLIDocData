@@ -187,12 +187,23 @@ sub gen_cli_doc_data_from_meta {
         example_categories => {},
     };
 
+    # a mapping from arg spec keys to %opts keys, so we can create a POD link
+    # from a positional argument in usage line to option, later when generating
+    # usage line
+    my %arg_spec_to_opts;
+
+    # a mapping from keys in func.specmeta (ospec) to %opts keys, so we can
+    # create a POD link from an option in usage line to option in Options
+    # section, later when generating usage line
+    my %ospec_to_opts;
+
     my %opts;
   GEN_LIST_OF_OPTIONS: {
         my $ospecs = $ggls_res->[3]{'func.specmeta'};
         # separate groupable aliases because they will be merged with the
         # argument options
         my (@k, @k_aliases);
+
       OSPEC1:
         for (sort keys %$ospecs) {
             my $ospec = $ospecs->{$_};
@@ -369,7 +380,9 @@ sub gen_cli_doc_data_from_meta {
             }
 
             $opts{$optkey} = $opt;
-        }
+            $arg_spec_to_opts{ $ospec->{arg} } = $optkey if $ospec->{arg};
+            $ospec_to_opts{$k} = $optkey;
+        } # while @k
 
         # link ungrouped alias to its main opt
       OPT1:
@@ -390,6 +403,9 @@ sub gen_cli_doc_data_from_meta {
 
     } # GEN_LIST_OF_OPTIONS
     $clidocdata->{opts} = \%opts;
+
+    #use DDC; dd \%arg_spec_to_opts;
+    #use DDC; dd \%ospec_to_opts;
 
   GEN_USAGE_LINE: {
         my @plain_args;
@@ -413,6 +429,7 @@ sub gen_cli_doc_data_from_meta {
             }
             $pos++;
             next unless defined($arg);
+            my $arg0 = $arg;
             if ($arg_spec->{slurpy} // $arg_spec->{greedy}) {
                 # try to find the singular form
                 $arg = $arg_spec->{'x.name.singular'}
@@ -421,10 +438,10 @@ sub gen_cli_doc_data_from_meta {
             }
             if ($arg_spec->{req}) {
                 push @plain_args, "<$arg>";
-                push @pod_args  , "E<lt>I<$arg>E<gt>";
+                push @pod_args  , qq#E<lt>L<$arg|/"$arg_spec_to_opts{$arg0}">E<gt>#;
             } else {
                 push @plain_args, "[$arg]";
-                push @pod_args  , "[I<$arg>]";
+                push @pod_args  , qq#[L<$arg|/"$arg_spec_to_opts{$arg0}">]#;
             }
             $plain_args[-1] .= " ..." if ($arg_spec->{slurpy} // $arg_spec->{greedy});
             $pod_args  [-1] .= " ..." if ($arg_spec->{slurpy} // $arg_spec->{greedy});
@@ -475,6 +492,11 @@ sub gen_cli_doc_data_from_meta {
                     $caption_from_schema = $type;
                 }
             }
+            #use DDC; dd $ospec; dd $ospecmeta;
+            my $opt_link =
+                defined $ospecmeta->{arg} ? $arg_spec_to_opts{ $ospecmeta->{arg} } :
+                defined $ospecmeta->{alias_for} ? $ospec_to_opts{ $ospecmeta->{alias_for} } :
+                $ospec_to_opts{$ospec};
             my $hres = Getopt::Long::Util::humanize_getopt_long_opt_spec({
                 extended=>1,
                 separator=>"|",
@@ -485,6 +507,7 @@ sub gen_cli_doc_data_from_meta {
                         ($argprop->{'x.cli.opt_value_label'} // $argprop->{caption} // $caption_from_schema) :
                         $copt->{value_label}
                 ),
+                opt_link => qq#/"$opt_link"#,
                 value_label_link=>(
                     $ospecmeta->{is_json} ? undef :
                     $ospecmeta->{is_yaml} ? undef :

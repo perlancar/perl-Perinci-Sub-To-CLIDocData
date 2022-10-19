@@ -154,6 +154,10 @@ _
         lang => {
             schema => 'str*',
         },
+        mark_different_lang => {
+            schema => 'bool*',
+            default => 1,
+        },
     },
     result => {
         schema => 'hash*',
@@ -165,6 +169,7 @@ sub gen_cli_doc_data_from_meta {
     my %args = @_;
 
     my $lang = $args{lang};
+    my $mark_different_lang = $args{mark_different_lang} // 1;
     my $meta = $args{meta} or return [400, 'Please specify meta'];
     my $common_opts = $args{common_opts};
     unless ($args{meta_is_normalized}) {
@@ -181,6 +186,7 @@ sub gen_cli_doc_data_from_meta {
     };
     $ggls_res->[0] == 200 or return $ggls_res;
 
+    my $langprop_args = {lang=>$lang, mark_different_lang=>$mark_different_lang};
     my $args_prop = $meta->{args} // {};
     my $clidocdata = {
         option_categories => {},
@@ -246,10 +252,10 @@ sub gen_cli_doc_data_from_meta {
                         orig_opt => $k,
                         is_alias => 1,
                         alias_for => $ospec->{alias_for},
-                        summary => $rimeta->langprop({lang=>$lang}, 'summary') //
+                        summary => $rimeta->langprop($langprop_args, 'summary') //
                             "Alias for "._dash_prefix($real_opt_ospec->{parsed}{opts}[0]),
                         description =>
-                            $rimeta->langprop({lang=>$lang}, 'description'),
+                            $rimeta->langprop($langprop_args, 'description'),
                     };
                 } else {
                     # an option for argument
@@ -277,26 +283,26 @@ sub gen_cli_doc_data_from_meta {
                         # for negative option, use negative summary instead of
                         # regular (positive sentence) summary
                         $opt->{summary} =
-                            $rimeta->langprop({lang=>$lang}, 'summary.alt.bool.not');
+                            $rimeta->langprop($langprop_args, 'summary.alt.bool.not');
                     } elsif (defined $ospec->{is_neg}) {
                         # for boolean option which we show the positive, show
                         # the positive summary if available
                         $opt->{summary} =
-                            $rimeta->langprop({lang=>$lang}, 'summary.alt.bool.yes') //
-                                $rimeta->langprop({lang=>$lang}, 'summary');
+                            $rimeta->langprop($langprop_args, 'summary.alt.bool.yes') //
+                                $rimeta->langprop($langprop_args, 'summary');
                     } elsif (($ospec->{parsed}{type}//'') eq 's@') {
                         # for array of string that can be specified via multiple
                         # --opt, show singular version of summary if available.
                         # otherwise show regular summary.
                         $opt->{summary} =
-                            $rimeta->langprop({lang=>$lang}, 'summary.alt.plurality.singular') //
-                                $rimeta->langprop({lang=>$lang}, 'summary');
+                            $rimeta->langprop($langprop_args, 'summary.alt.plurality.singular') //
+                                $rimeta->langprop($langprop_args, 'summary');
                     } else {
                         $opt->{summary} =
-                            $rimeta->langprop({lang=>$lang}, 'summary');
+                            $rimeta->langprop($langprop_args, 'summary');
                     }
                     $opt->{description} =
-                        $rimeta->langprop({lang=>$lang}, 'description');
+                        $rimeta->langprop($langprop_args, 'description');
 
                     # find aliases that can be grouped together with this option
                     my @aliases;
@@ -364,13 +370,13 @@ sub gen_cli_doc_data_from_meta {
                     common_opt => $ospec->{common_opt},
                     common_opt_spec => $spec,
                     summary => $show_neg ?
-                        $rimeta->langprop({lang=>$lang}, 'summary.alt.bool.not') :
-                            $rimeta->langprop({lang=>$lang}, 'summary'),
+                        $rimeta->langprop($langprop_args, 'summary.alt.bool.not') :
+                            $rimeta->langprop($langprop_args, 'summary'),
                     (schema => $spec->{schema}) x !!$spec->{schema},
                     ('x.schema.entity' => $spec->{'x.schema.entity'}) x !!$spec->{'x.schema.entity'},
                     ('x.schema.element_entity' => $spec->{'x.schema.element_entity'}) x !!$spec->{'x.schema.element_entity'},
                     description =>
-                        $rimeta->langprop({lang=>$lang}, 'description'),
+                        $rimeta->langprop($langprop_args, 'description'),
                     (default => $spec->{default}) x !!(exists($spec->{default}) && !$show_neg),
                 };
 
@@ -593,8 +599,8 @@ sub gen_cli_doc_data_from_meta {
             }
             my $egdata = {
                 cmdline      => $cmdline,
-                summary      => $rimeta->langprop({lang=>$lang}, 'summary'),
-                description  => $rimeta->langprop({lang=>$lang}, 'description'),
+                summary      => $rimeta->langprop($langprop_args, 'summary'),
+                description  => $rimeta->langprop($langprop_args, 'description'),
                 example_spec => $eg,
             };
             # XXX show result from $eg

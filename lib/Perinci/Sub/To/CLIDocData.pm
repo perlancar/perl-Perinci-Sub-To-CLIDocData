@@ -444,10 +444,10 @@ sub gen_cli_doc_data_from_meta {
             }
             if ($arg_spec->{req}) {
                 push @plain_args, "<$arg>";
-                push @pod_args  , qq#E<lt>L<$arg|/"$arg_spec_to_opts{$arg0}">E<gt>#;
+                push @pod_args  , qq#E<lt>I<L<$arg|/"$arg_spec_to_opts{$arg0}">>E<gt>#;
             } else {
                 push @plain_args, "[$arg]";
-                push @pod_args  , qq#[L<$arg|/"$arg_spec_to_opts{$arg0}">]#;
+                push @pod_args  , qq#[I<L<$arg|/"$arg_spec_to_opts{$arg0}">>]#;
             }
             $plain_args[-1] .= " ..." if ($arg_spec->{slurpy} // $arg_spec->{greedy});
             $pod_args  [-1] .= " ..." if ($arg_spec->{slurpy} // $arg_spec->{greedy});
